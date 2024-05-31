@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --primary-color: #660066;
+    --secondary-color: #221E22;
+}
+
+.bg-img {
+    background-image: radial-gradient(
+            circle,
+            rgba(0, 0, 0, 0.7) 36%,
+            rgba(2, 0, 36, 0.6) 57%
+    ),
+    url('./images/bg_home1.jpeg');
+    background-position: center;
+    background-size: 110% 110%;
+}
+
+.error-msg {
+    @apply text-red-800 text-sm mt-1;
+}
+
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+    transition: all 0.4s ease;
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+    transform: translateY(-20px);
+    opacity: 0;
+}
+
+.error-msg {
+    @apply mb-1 text-xs text-red-500 italic;
+}

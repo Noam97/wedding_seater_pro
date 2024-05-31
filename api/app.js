@@ -1,0 +1,69 @@
+import express from 'express'
+import cors from "cors";
+import bodyParser from "body-parser";
+import bcrypt from "bcrypt";
+import {PrismaClient} from "@prisma/client";
+
+const app = express();
+app.use(cors())
+app.use(bodyParser.json());
+const prisma = new PrismaClient();
+const PORT = 3200;
+
+app.get('/', (req, res) => {
+    res.send('Started Working, Express!');
+});
+
+app.post('/api/login', async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const user = await prisma.user.findFirst({
+            where: { email }
+        });
+
+        if (!user) return res.status(422).send({ error: 'Email or password is invalid' });
+
+        bcrypt.compare(password, user.password, (err, match) => {
+            if (err) return res.status(422).send({ error: 'Email or password is invalid' });
+
+            if (match) {
+                return res.send({ user });
+            } else {
+                return res.status(422).send({ error: 'Email or password is invalid' });
+            }
+        });
+    } catch (error) {
+        return res.status(400).send({ error: 'Email or password is invalid' });
+    }
+});
+
+app.post('/api/register', async (req, res) => {
+    try {
+        const { firstName, lastName, email, password } = req.body
+
+        if (!firstName.length || !lastName.length || !email.length || !password.length)
+            return res.status(400).send({ error: 'The payload is missing' })
+
+        // Hash the password
+        const passwordHash = await bcrypt.hash(password, 10);
+
+        // Create a new user into the database
+        const newUser = await prisma.user.create({
+            data: {
+                first_name: firstName,
+                last_name: lastName,
+                email: email,
+                password: passwordHash,
+            },
+        });
+
+        res.status(201).json({ user: newUser });
+    } catch (error) {
+        console.error('Error registering user:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+})
+
+app.listen(PORT, () => {
+    console.log(`Server listening at port: ${PORT}`);
+});
