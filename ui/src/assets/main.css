@@ -19,20 +19,21 @@
 }
 
 .error-msg {
-    @apply text-red-800 text-sm mt-1;
+    @apply text-red-500 text-sm !-mb-5 absolute bottom-0;
 }
 
 .slide-fade-enter-active,
 .slide-fade-leave-active {
     transition: all 0.4s ease;
+    opacity: 1;
 }
 
 .slide-fade-enter-from,
 .slide-fade-leave-to {
-    transform: translateY(-20px);
+    /*transform: translateX(-10px);*/
     opacity: 0;
 }
 
-.error-msg {
+.error {
     @apply mb-1 text-xs text-red-500 italic;
 }
