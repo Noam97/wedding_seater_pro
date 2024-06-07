@@ -321,7 +321,7 @@ async function generateTables() {
     await store.generateTables()
   } catch (error) {
     console.log(error)
-  })
+  }
 }
 function resetError() {
   error.value = ''

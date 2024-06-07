@@ -16,6 +16,25 @@ export const useStore = defineStore('store', () => {
         return await axiosInstance.post('/login', payload)
     }
 
+    async function createGuest(payload) {
+        return await axiosInstance.post('/guests', payload)
+    }
+
+    async function getGuests() {
+        return await axiosInstance.get('/guests')
+    }
+
+    async function createTable(payload) {
+        return await axiosInstance.post('/tables', payload)
+    }
+
+    async function getTables() {
+        return await axiosInstance.get('/tables')
+    }
+
+    async function generateTables() {
+        return await axiosInstance.get('/tables/generate')
+    }
 
     function saveUserInLocalStorage(newUser) {
         user.value = newUser
@@ -31,6 +50,11 @@ export const useStore = defineStore('store', () => {
 
         createUser,
         login,
+        createGuest,
+        getGuests,
+        createTable,
+        getTables,
+        generateTables,
         saveUserInLocalStorage,
         logout
     }
