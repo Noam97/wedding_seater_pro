@@ -1,7 +1,7 @@
 <template>
   <div class="bg-img flex flex-col justify-center items-center w-screen h-screen bg-gray-100">
     <form
-        class="flex flex-col justify-center items-center py-4 px-6 sm:px-10 rounded-lg shadow-lg backdrop-blur-sm bg-white/30 w-1/3"
+        class="flex flex-col justify-center items-center py-4 px-6 sm:px-10 rounded-lg shadow-lg backdrop-blur-sm bg-white/30 w-1/2"
         @submit.prevent="submit">
       <h1 class="text-4xl text-white uppercase tracking-tighter">
         Register

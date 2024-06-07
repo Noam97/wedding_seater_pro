@@ -1,4 +1,3 @@
-In client side -> views/login.vue:
 <template>
   <div class="bg-img flex flex-col justify-center items-center w-screen h-screen bg-gray-100">
     <form
