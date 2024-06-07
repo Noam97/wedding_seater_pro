@@ -1,5 +1,6 @@
 import axios from 'axios'
-import {useStore} from "@/store/index.js";
+import { useStore } from "@/store/index.js";
+import {useRouter} from "vue-router";
 
 const apiPort = 3200
 
@@ -13,11 +14,11 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
     async (config) => {
+        // @TODO check which page we are now, and send the token just when we need it
         const store = useStore()
         const token = store.getToken
         if (token) {
-            config.headers['x-access-token'] =
-                token
+            config.headers['Authorization'] = token
         }
 
         return config

@@ -36,7 +36,7 @@
         class="flex items-center gap-6 border-2 border-gray-200 py-4 px-6 sm:px-10 rounded-lg shadow-md w-full"
         @submit.prevent="addGuest"
     >
-      <div class="flex flex-col w-full">
+      <div class="relative flex flex-col w-full">
         <input
             @input="resetError"
             v-model="newGuest.name"
@@ -48,99 +48,68 @@
         <transition name="slide-fade">
             <span v-if="v$.name.$error" class="error-msg">
               {{ v$.name.$errors[0].$message }}
-              error name
             </span>
         </transition>
       </div>
 
-      <div class="flex flex-col w-full">
+      <div class="relative flex flex-col w-full">
         <input
             @input="resetError"
             v-model="newGuest.guestsCount"
             placeholder="Guest's count"
-            type="text"
+            type="number"
             class="duration-300 border-2 py-1 px-2 rounded-xl"
         />
 
         <transition name="slide-fade">
             <span v-if="v$.guestsCount.$error" class="error-msg">
               {{ v$.guestsCount.$errors[0].$message }}
-              error email
             </span>
         </transition>
       </div>
 
-      <div class="flex items-center gap-6 w-full">
-        <label for="side">
-          Guest's side:
-        </label>
+      <div class="relative flex items-center gap-6 w-full">
+        <h1> Side </h1>
+
         <button
+            type="button"
             @click="newGuest.side = 'bride'"
             class="border border-blue-700 text-blue-700 px-4 py-1 rounded-xl"
             :class="newGuest.side === 'bride' ? 'bg-blue-700 !text-white' : ''"
-        >
-          <input
-              id="side"
-              @input="resetError"
-              v-model="newGuest.side"
-              type="hidden"
-              value="bride"
-          />
-          Bride
-        </button>
+        > Bride </button>
+
         <button
+            type="button"
             @click="newGuest.side = 'groom'"
             class="border border-blue-700 text-blue-700 px-4 py-1 rounded-xl"
             :class="newGuest.side === 'groom' ? 'bg-blue-700 !text-white' : ''"
-        >
-          <input
-              id="side"
-              @input="resetError"
-              v-model="newGuest.side"
-              type="hidden"
-              value="groom"
-          />
-          Groom
-        </button>
+        > Groom </button>
 
         <transition name="slide-fade">
             <span v-if="v$.side.$error" class="error-msg">
               {{ v$.side.$errors[0].$message }}
-              error email
             </span>
         </transition>
       </div>
 
-      <div class="flex flex-col w-full">
-        <select>
-          <option>
-            Close family
+      <div class="relative flex flex-col w-full">
+        <select
+            v-model="newGuest.closeness"
+            class="duration-300 border-2 py-1 px-2 rounded-xl">
+          <option disabled selected value="">
+            Choose Closeness
           </option>
-          <option>
-            Distant family
-          </option>
-          <option>
-            Friends
-          </option>
-          <option>
-            Co-workers
-          </option>
-          <option>
-            Parents' guests
+          <option
+              v-for="item in closenessList"
+              :key="item"
+              :value="item.value">
+            {{ item.name }}
           </option>
         </select>
-        <!--        <input-->
-        <!--          @input="resetError"-->
-        <!--          v-model="newGuest.closeness"-->
-        <!--          placeholder="In the future it will be a selection"-->
-        <!--          type="text"-->
-        <!--          class="duration-300 border-2 py-1 px-2 rounded-xl"-->
-        <!--        />-->
 
         <transition name="slide-fade">
           <span v-if="v$.closeness.$error" class="error-msg">
             {{ v$.closeness.$errors[0].$message }}
-            error email
           </span>
         </transition>
       </div>
@@ -163,9 +132,9 @@
 
     <form
         v-if="openTableCard"
-        class="flex items-center gap-6 border-2 border-gray-200 py-4 px-6 sm:px-10 rounded-lg shadow-md w-full"
+        class="flex items-center gap-6 border-2 border-gray-200 py-6 px-6 sm:px-10 rounded-lg shadow-md w-full"
         @submit.prevent="addTable">
-      <div class="flex flex-col w-full">
+      <div class="relative flex flex-col w-full">
         <input
             @input="resetError"
             v-model="newTable.name"
@@ -177,24 +146,22 @@
         <transition name="slide-fade">
             <span v-if="v$2.name.$error" class="error-msg">
               {{ v$2.name.$errors[0].$message }}
-              error name
             </span>
         </transition>
       </div>
 
-      <div class="flex flex-col w-full">
+      <div class="relative flex flex-col w-full">
         <input
             @input="resetError"
             v-model="newTable.placesCount"
             placeholder="Guest's count"
-            type="text"
+            type="number"
             class="duration-300 border-2 py-1 px-2 rounded-xl"
         />
 
         <transition name="slide-fade">
             <span v-if="v$2.placesCount.$error" class="error-msg">
               {{ v$2.placesCount.$errors[0].$message }}
-              error email
             </span>
         </transition>
       </div>
@@ -223,7 +190,7 @@
 import Card from "@/components/Card.vue";
 import GuestTable from "@/components/GuestTable.vue";
 import { ref } from "vue";
-import { required } from "@vuelidate/validators";
+import {helpers, required} from "@vuelidate/validators";
 import useVuelidate from "@vuelidate/core";
 import {useStore} from "@/store/index.js";
 
@@ -240,18 +207,48 @@ const newTable = ref({
   name: '',
   placesCount: '',
 })
-const titles = ref(['Name', "Guest's count", 'Side', 'Table Number', 'Closeness'])
+const closenessList = ref([
+  {
+    value: 'close_family',
+    name: 'Close Family'
+  }, {
+    value: 'distant_family',
+    name: 'Distant family'
+  }, {
+    value: 'friends',
+    name: 'Friends'
+  }, {
+    value: 'co-workers',
+    name: 'Co-workers'
+  }, {
+    value: "parents_guests",
+    name: "Parents' guests"
+  }
+])
+const titles = ref(['Name', "Guest's count", 'Side', 'Closeness', 'Table Number'])
 const contents = ref([])
 const error = ref('')
 const rules = {
   name: { required },
-  guestsCount: { required },
+  guestsCount: {
+    required,
+    minValue: helpers.withMessage(
+        "The minimum is 0",
+        helpers.withAsync((value) => value > 0)
+    )
+  },
   side: { required },
   closeness: { required },
 }
 const rules2 = {
   name: { required },
-  placesCount: { required },
+  placesCount: {
+    required,
+    minValue: helpers.withMessage(
+        "The minimum is 0",
+        helpers.withAsync((value) => value > 0)
+    )
+  },
 }
 const v$ = useVuelidate(rules, newGuest)
 const v$2 = useVuelidate(rules2, newTable)
@@ -265,18 +262,52 @@ async function addGuest() {
 
   try {
     const response = await store.createGuest(newGuest.value)
+
+    let closenessName = ''
+    closenessList.value.forEach(closeness => {
+      if(closeness.value === response.data.closeness)
+        closenessName = closeness.name
+    })
     contents.value.unshift([
       response.data.name,
       response.data.count,
       response.data.side,
+      closenessName,
       'NaN',
-      response.data.closeness
     ])
+
+    newGuest.value.closeness = ''
+    newGuest.value.name = ''
+    newGuest.value.guestsCount = ''
+    newGuest.value.side = ''
+
+    resetAllErrors()
   } catch (err) {
     error.value = err.response.data.error
   }
 }
+async function getGuests() {
+  try {
+    const response = await store.getGuests()
 
+    response.data.map(item => {
+      let closenessName = ''
+      closenessList.value.forEach(closeness => {
+        if(closeness.value === item.closeness)
+          closenessName = closeness.name
+      })
+      contents.value.push([
+        item.name,
+        item.count,
+        item.side,
+        closenessName,
+        'NaN',
+      ])
+    })
+  } catch (error) {
+    console.log(error)
+  }
+}
 function openGuest() {
   openTableCard.value = false
   openGuestCard.value = !openGuestCard.value
@@ -293,29 +324,15 @@ async function addTable() {
 
   try {
     await store.createTable(newTable.value)
+
+    newTable.value.placesCount = ''
+    newTable.value.name = ''
+
+    resetAllErrors()
   } catch (err) {
     error.value = err.response.data.error
   }
 }
-
-async function getGuests() {
-  try {
-    const response = await store.getGuests()
-
-    response.data.map(item => {
-      contents.value.push([
-        item.name,
-        item.count,
-        item.side,
-        'NaN',
-        item.closeness
-      ])
-    })
-  } catch (error) {
-    console.log(error)
-  }
-}
-
 async function generateTables() {
   try {
     await store.generateTables()
@@ -325,5 +342,10 @@ async function generateTables() {
 }
 function resetError() {
   error.value = ''
+}
+function resetAllErrors() {
+  v$.value.$reset()
+  v$2.value.$reset()
+  resetError()
 }
 </script>
