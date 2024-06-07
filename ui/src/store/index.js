@@ -3,11 +3,11 @@ import { defineStore } from "pinia";
 import { axiosInstance } from "@/helper/axios.js"
 
 export const useStore = defineStore('store', () => {
-    const user = localStorage.getItem('user') === null ?
+    const token = localStorage.getItem('token') === null ?
         ref(null) :
-        ref(JSON.parse(localStorage.getItem('user')))
+        ref(JSON.parse(localStorage.getItem('token')))
 
-    const getToken = computed(() => user)
+    const getToken = computed(() => token.value)
     async function createUser(payload) {
         return await axiosInstance.post('/register', payload)
     }
@@ -36,13 +36,13 @@ export const useStore = defineStore('store', () => {
         return await axiosInstance.get('/tables/generate')
     }
 
-    function saveUserInLocalStorage(newUser) {
-        user.value = newUser
-        localStorage.setItem('user', JSON.stringify(user.value))
+    function saveUserInLocalStorage(newToken) {
+        token.value = newToken
+        localStorage.setItem('token', JSON.stringify(token.value))
     }
 
     function logout() {
-        localStorage.removeItem('user')
+        localStorage.removeItem('token')
     }
 
     return {

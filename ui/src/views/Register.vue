@@ -8,8 +8,8 @@
       </h1>
 
       <div
-          class="flex flex-col lg:flex-row lg:flex-wrap justify-center my-4 gap-x-10 gap-y-4">
-        <div class="flex flex-col w-full">
+          class="flex flex-col lg:flex-row lg:flex-wrap justify-center my-4 gap-x-10 gap-y-8">
+        <div class="relative flex flex-col w-full">
           <input
               @input="resetError"
               v-model="payload.firstName"
@@ -25,7 +25,7 @@
           </transition>
         </div>
 
-        <div class="flex flex-col w-full">
+        <div class="relative flex flex-col w-full">
           <input
               @input="resetError"
               v-model="payload.lastName"
@@ -41,7 +41,7 @@
           </transition>
         </div>
 
-        <div class="flex flex-col w-full">
+        <div class="relative flex flex-col w-full">
           <input
               @input="resetError"
               v-model="payload.email"
@@ -58,7 +58,7 @@
           </transition>
         </div>
 
-        <div class="flex flex-col w-full">
+        <div class="relative flex flex-col w-full">
           <input
               @input="resetError"
               v-model="payload.password"
@@ -75,7 +75,7 @@
           </transition>
         </div>
 
-        <div class="flex flex-col w-full">
+        <div class="relative flex flex-col w-full">
           <input
               @input="resetError"
               v-model="payload.confirm"
@@ -96,7 +96,7 @@
       <transition name="slide-fade">
         <div
             v-if="errors.length"
-            class="error-msg">
+            class="error">
           {{ errors }}
         </div>
       </transition>

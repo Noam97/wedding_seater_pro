@@ -7,8 +7,8 @@
         Login
       </h1>
       <div
-          class="flex flex-col lg:flex-row lg:flex-wrap justify-center my-4 gap-x-10 gap-y-4">
-        <div class="flex flex-col w-full">
+          class="flex flex-col lg:flex-row lg:flex-wrap justify-center my-4 gap-x-10 gap-y-8">
+        <div class="relative flex flex-col w-full">
           <input
               @input="resetError"
               v-model="payload.email"
@@ -20,12 +20,11 @@
           <transition name="slide-fade">
             <span v-if="v$.email.$error" class="error-msg">
               {{ v$.email.$errors[0].$message }}
-              error email
             </span>
           </transition>
         </div>
 
-        <div class="flex flex-col w-full">
+        <div class="relative flex flex-col w-full">
           <input
               @input="resetError"
               v-model="payload.password"
@@ -37,7 +36,6 @@
           <transition name="slide-fade">
             <span v-if="v$.password.$error" class="error-msg">
               {{ v$.password.$errors[0].$message }}
-              error email
             </span>
           </transition>
         </div>
@@ -46,7 +44,7 @@
       <transition name="slide-fade">
         <div
             v-if="error.length"
-            class="error-msg">
+            class="error">
           {{ error }}
         </div>
       </transition>
@@ -91,7 +89,7 @@ async function submit() {
 
   try {
     const response = await store.login(payload.value)
-    store.saveUserInLocalStorage(response.data)
+    store.saveUserInLocalStorage(response.data.token)
     await router.push('/')
   } catch (err) {
     error.value = err.response.data.error
