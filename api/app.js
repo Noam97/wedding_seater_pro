@@ -67,3 +67,36 @@ app.post('/api/register', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server listening at port: ${PORT}`);
 });
+
+app.post('/api/guests', async (req, res) => {
+    try {
+        const { name, guestsCount, side, closeness } = req.body
+
+        if (!name.length || !guestsCount.length || !side.length || !closeness.length)
+            return res.status(400).send({ error: 'The payload is missing' })
+
+        // Create a new guest into the database
+        const newGuest = await prisma.guest.create({
+            data: {
+                name,
+                count: guestsCount,
+                side,
+                closeness,
+            },
+        });
+
+        res.status(201).json(newGuest);
+    } catch (error) {
+        console.error('Error creating a guest:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+})
+
+app.get('/api/guests', async (req, res) => {
+    try {
+        const guests = await prisma.guest.findMany();
+        res.status(200).json(guests);
+    } catch (error) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+})
