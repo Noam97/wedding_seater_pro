@@ -14,3 +14,20 @@ model User {
   first_name String
   password String
 }
+
+model Table {
+  id Int @id @default(autoincrement())
+  table_number String
+  table_count String
+  guests Guest[]
+}
+
+model Guest {
+  id Int @id @default(autoincrement())
+  name String
+  count String
+  side String
+  closeness String
+  table Table? @relation(fields: [table_id], references: [id])
+  table_id Int?
+}
