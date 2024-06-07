@@ -31,3 +31,4 @@ model Guest {
   table Table? @relation(fields: [table_id], references: [id])
   table_id Int?
 }
+//commit for test
