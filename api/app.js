@@ -3,6 +3,8 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import bcrypt from "bcrypt";
 import {PrismaClient} from "@prisma/client";
+import jwt from 'jsonwebtoken';
+
 
 const app = express();
 app.use(cors())
@@ -14,26 +16,28 @@ app.get('/', (req, res) => {
     res.send('Started Working, Express!');
 });
 
-app.post('/api/login', async (req, res) => {
-    const { email, password } = req.body;
+app.post('/api/login', async (request, response) => {
+    const { email, password } = request.body
     try {
         const user = await prisma.user.findFirst({
             where: { email }
-        });
+        })
 
-        if (!user) return res.status(422).send({ error: 'Email or password is invalid' });
+        if(!user) return response.status(422).send({ error: 'Email or password is invalid' });
 
-        bcrypt.compare(password, user.password, (err, match) => {
-            if (err) return res.status(422).send({ error: 'Email or password is invalid' });
+        bcrypt.compare(password, user.password, (err, res) => {
+            if(err) return response.status(422).send({ error: 'Email or password is invalid' });
 
-            if (match) {
-                return res.send({ user });
-            } else {
-                return res.status(422).send({ error: 'Email or password is invalid' });
+            if(res) {
+                const token = jwt.sign({userId : user.id}, 'JWT_SECRET', {expiresIn: '1h'});
+                return response.send({token});
             }
+            else
+                return response.status(401).send({ error: "Invalid credential" })
         });
+
     } catch (error) {
-        return res.status(400).send({ error: 'Email or password is invalid' });
+        return response.status(400).send({ error: 'Email or password is invalid' })
     }
 });
 
@@ -52,7 +56,7 @@ app.post('/api/register', async (req, res) => {
             data: {
                 first_name: firstName,
                 last_name: lastName,
-                email: email,
+                email,
                 password: passwordHash,
             },
         });
@@ -64,15 +68,11 @@ app.post('/api/register', async (req, res) => {
     }
 })
 
-app.listen(PORT, () => {
-    console.log(`Server listening at port: ${PORT}`);
-});
-
 app.post('/api/guests', async (req, res) => {
     try {
         const { name, guestsCount, side, closeness } = req.body
 
-        if (!name.length || !guestsCount.length || !side.length || !closeness.length)
+        if (!name.length || !guestsCount || !side.length || !closeness.length)
             return res.status(400).send({ error: 'The payload is missing' })
 
         // Create a new guest into the database
@@ -100,3 +100,49 @@ app.get('/api/guests', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 })
+
+app.post('/api/tables', async (req, res) => {
+    try {
+        const { name, placesCount } = req.body
+
+        if (!name.length || !placesCount)
+            return res.status(400).send({ error: 'The payload is missing' })
+
+        // Create a new guest into the database
+        const newGuest = await prisma.table.create({
+            data: {
+                name,
+                places_count: placesCount
+            },
+        });
+
+        res.status(201).json(newGuest);
+    } catch (error) {
+        console.error('Error creating a guest:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+})
+
+app.get('/api/tables', async (req, res) => {
+    try {
+        const guests = await prisma.table.findMany();
+        res.status(200).json(guests);
+    } catch (error) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+})
+
+app.get('/api/tables/genereta', async (req, res) => {
+    // @TODO the real algorithm is here !!!!
+
+    // try {
+    //     const guests = await prisma.guest.findMany();
+    //     res.status(200).json(guests);
+    // } catch (error) {
+    //     res.status(500).json({ error: 'Internal server error' });
+    // }
+})
+
+app.listen(PORT, () => {
+    console.log(`Server listening at port: ${PORT}`);
+});
