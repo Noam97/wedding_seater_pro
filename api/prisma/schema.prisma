@@ -7,6 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
 model User {
   id Int @id @default(autoincrement())
   email String @unique
@@ -17,18 +18,17 @@ model User {
 
 model Table {
   id Int @id @default(autoincrement())
-  table_number String
-  table_count String
+  name String
+  places_count Int
   guests Guest[]
 }
 
 model Guest {
   id Int @id @default(autoincrement())
   name String
-  count String
+  count Int
   side String
   closeness String
   table Table? @relation(fields: [table_id], references: [id])
   table_id Int?
 }
-//commit for test
