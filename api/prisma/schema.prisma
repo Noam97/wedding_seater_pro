@@ -14,6 +14,8 @@ model User {
   last_name String
   first_name String
   password String
+  tables Table[]
+  guests Guest[]
 }
 
 model Table {
@@ -21,6 +23,8 @@ model Table {
   name String
   places_count Int
   guests Guest[]
+  user User @relation(fields: [user_id], references: [id])
+  user_id Int
 }
 
 model Guest {
@@ -31,4 +35,6 @@ model Guest {
   closeness String
   table Table? @relation(fields: [table_id], references: [id])
   table_id Int?
+  user User @relation(fields: [user_id], references: [id])
+  user_id Int
 }
