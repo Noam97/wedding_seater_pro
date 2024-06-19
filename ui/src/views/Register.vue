@@ -160,7 +160,7 @@ async function submit() {
   }
 
   try {
-    const response = await store.createUser(payload.value)
+    await store.createUser(payload.value)
 
     await router.push('/login')
   } catch (error) {
