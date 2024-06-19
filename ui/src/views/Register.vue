@@ -102,10 +102,16 @@
       </transition>
 
       <div class="flex xl:flex-row flex-col items-center mt-4 w-full">
+        <button
+            type="button"
+            @click="router.push('/login')"
+            class="absolute duration-300 tracking-wider text-primary-color text-xs py-1 px-3 whitespace-nowrap border-b-2 border-transparent hover:border-primary-color">
+          Have an account
+        </button>
         <div class="flex justify-center items-center w-full">
           <button
               type="submit"
-              class="duration-300 border-2 border-primary-color rounded-full tracking-wider bg-white text-primary-color py-2 px-5 hover:bg-primary-color hover:text-white">
+              class="duration-300 border-2 border-primary-color rounded-full tracking-wider text-primary-color py-2 px-5 hover:bg-primary-color hover:text-white">
             Send
           </button>
         </div>
