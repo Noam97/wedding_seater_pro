@@ -37,3 +37,12 @@
 .error {
     @apply mb-1 text-xs text-red-500 italic;
 }
+
+input:focus,
+select:focus {
+    outline: none;
+}
+
+.input {
+    @apply duration-300 border-2 py-1 px-2 rounded-xl border-2 border-primary-color;
+}

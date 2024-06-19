@@ -1,0 +1,6 @@
+node_modules
+package-lock.json
+.envnode_modules/
+*.log
+.env
+./prisma/migrations
