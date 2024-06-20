@@ -1,39 +1,32 @@
 <template>
   <div class="min-h-screen flex flex-col gap-6 items-center p-10">
-    <h1 class="text-3xl text-blue-600 uppercase">
+    <h1 class="text-3xl text-primary-color uppercase">
       Guest Management
     </h1>
 
-    <card />
+    <Card :bride-count="countFromBride" :groom-count="countFromGroom" :invitations="invitations" />
 
     <div class="flex justify-center gap-6">
       <button
           @click="openGuest"
-          :class="openGuestCard ? 'bg-blue-700 text-blue-100' : 'border-blue-700 text-blue-700'"
-          class="duration-300 border-2 rounded-xl px-10 py-2 hover:shadow-md"
+          :class="openGuestCard ? 'bg-primary-color text-white' : 'text-primary-color'"
+          class="duration-300 border-2 border-primary-color  rounded-xl px-10 py-2 hover:shadow-md"
       >
         Add a guest
       </button>
 
       <button
           @click="openTable"
-          :class="openTableCard ? 'bg-blue-700 text-blue-100' : 'border-blue-700 text-blue-700'"
-          class="duration-300 border-2 rounded-xl px-10 py-2 hover:shadow-md"
+          :class="openTableCard ? 'bg-primary-color text-white' : 'text-primary-color'"
+          class="duration-300 border-2 border-primary-color  rounded-xl px-10 py-2 hover:shadow-md"
       >
         Add a table
-      </button>
-
-      <button
-          @click="generateTables"
-          class="duration-300 border-2 border-blue-700 bg-blue-700 text-blue-100 rounded-xl px-10 py-2 hover:shadow-md"
-      >
-        Generate tables
       </button>
     </div>
 
     <form
         v-if="openGuestCard"
-        class="flex items-center gap-6 border-2 border-gray-200 py-4 px-6 sm:px-10 rounded-lg shadow-md w-full"
+        class=" flex items-center gap-6 border border-purple-300 py-6 px-6 sm:px-10 rounded-lg shadow-md w-full"
         @submit.prevent="addGuest"
     >
       <div class="relative flex flex-col w-full">
@@ -42,7 +35,7 @@
             v-model="newGuest.name"
             placeholder="Name"
             type="text"
-            class="duration-300 border-2 py-1 px-2 rounded-xl"
+            class="input"
         />
 
         <transition name="slide-fade">
@@ -58,7 +51,7 @@
             v-model="newGuest.guestsCount"
             placeholder="Guest's count"
             type="number"
-            class="duration-300 border-2 py-1 px-2 rounded-xl"
+            class="input"
         />
 
         <transition name="slide-fade">
@@ -74,15 +67,15 @@
         <button
             type="button"
             @click="newGuest.side = 'bride'"
-            class="border border-blue-700 text-blue-700 px-4 py-1 rounded-xl"
-            :class="newGuest.side === 'bride' ? 'bg-blue-700 !text-white' : ''"
+            class="duration-300 border-2 border-primary-color text-primary-color px-4 py-1 rounded-xl"
+            :class="newGuest.side === 'bride' ? 'bg-primary-color !text-white' : ''"
         > Bride </button>
 
         <button
             type="button"
             @click="newGuest.side = 'groom'"
-            class="border border-blue-700 text-blue-700 px-4 py-1 rounded-xl"
-            :class="newGuest.side === 'groom' ? 'bg-blue-700 !text-white' : ''"
+            class="duration-300 border-2 border-primary-color text-primary-color px-4 py-1 rounded-xl"
+            :class="newGuest.side === 'groom' ? 'bg-primary-color !text-white' : ''"
         > Groom </button>
 
         <transition name="slide-fade">
@@ -95,7 +88,7 @@
       <div class="relative flex flex-col w-full">
         <select
             v-model="newGuest.closeness"
-            class="duration-300 border-2 py-1 px-2 rounded-xl">
+            class="duration-300 border-2 border-primary-color py-1 px-2 rounded-xl">
           <option disabled selected value="">
             Choose Closeness
           </option>
@@ -114,25 +107,27 @@
         </transition>
       </div>
 
-      <transition name="slide-fade">
-        <div
-            v-if="error.length"
-            class="error-msg">
-          {{ error }}
-        </div>
-      </transition>
-
-      <button
-          type="submit"
-          class="duration-300 border-2 border-blue-700 rounded-xl tracking-wider bg-blue-700 text-white py-2 px-5 hover:shadow-xl"
-      >
-        Add
-      </button>
+      <div class="relative">
+        <button
+            type="submit"
+            class="duration-300 border-2 border-primary-color rounded-xl tracking-wider bg-primary-color text-white py-2 px-5 hover:shadow-xl"
+        >
+          Add
+        </button>
+        <transition name="slide-fade">
+          <div
+              v-if="error.length"
+              class="error-msg whitespace-nowrap right-0"
+          >
+            {{ error }}
+          </div>
+        </transition>
+      </div>
     </form>
 
     <form
         v-if="openTableCard"
-        class="flex items-center gap-6 border-2 border-gray-200 py-6 px-6 sm:px-10 rounded-lg shadow-md w-full"
+        class="flex items-center gap-6 border border-purple-300 py-6 px-6 sm:px-10 rounded-lg shadow-md w-full"
         @submit.prevent="addTable">
       <div class="relative flex flex-col w-full">
         <input
@@ -140,7 +135,7 @@
             v-model="newTable.name"
             placeholder="Table's Name"
             type="text"
-            class="duration-300 border-2 py-1 px-2 rounded-xl"
+            class="input"
         />
 
         <transition name="slide-fade">
@@ -156,7 +151,7 @@
             v-model="newTable.placesCount"
             placeholder="Guest's count"
             type="number"
-            class="duration-300 border-2 py-1 px-2 rounded-xl"
+            class="input"
         />
 
         <transition name="slide-fade">
@@ -166,20 +161,22 @@
         </transition>
       </div>
 
-      <transition name="slide-fade">
-        <div
-            v-if="error.length"
-            class="error-msg">
-          {{ error }}
-        </div>
-      </transition>
-
-      <button
-          type="submit"
-          class="duration-300 border-2 border-blue-700 rounded-xl tracking-wider bg-blue-700 text-white py-2 px-5 hover:shadow-xl"
-      >
-        Add
-      </button>
+      <div class="relative">
+        <button
+            type="submit"
+            class="duration-300 border-2 border-primary-color rounded-xl tracking-wider bg-primary-color text-white py-2 px-5 hover:shadow-xl"
+        >
+          Add
+        </button>
+        <transition name="slide-fade">
+          <div
+              v-if="error.length"
+              class="error-msg whitespace-nowrap right-0"
+          >
+            {{ error }}
+          </div>
+        </transition>
+      </div>
     </form>
 
     <guest-table :titles="titles" :contents="contents" />
@@ -252,6 +249,9 @@ const rules2 = {
 }
 const v$ = useVuelidate(rules, newGuest)
 const v$2 = useVuelidate(rules2, newTable)
+const countFromBride = ref(0)
+const countFromGroom = ref(0)
+const invitations = ref(0)
 
 getGuests()
 async function addGuest() {
@@ -276,6 +276,11 @@ async function addGuest() {
       'NaN',
     ])
 
+    if(response.data.side === 'bride')
+      countFromBride.value += response.data.count
+    else countFromGroom.value += response.data.count
+    invitations.value++
+
     newGuest.value.closeness = ''
     newGuest.value.name = ''
     newGuest.value.guestsCount = ''
@@ -284,6 +289,7 @@ async function addGuest() {
     resetAllErrors()
   } catch (err) {
     error.value = err.response.data.error
+    console.log(err.response.data.error, error.value)
   }
 }
 async function getGuests() {
@@ -303,18 +309,33 @@ async function getGuests() {
         closenessName,
         'NaN',
       ])
+
+      if(item.side === 'bride')
+        countFromBride.value += item.count
+      else countFromGroom.value += item.count
     })
+    invitations.value = response.data.length
   } catch (error) {
     console.log(error)
   }
 }
 function openGuest() {
+  resetAllErrors()
   openTableCard.value = false
   openGuestCard.value = !openGuestCard.value
+
+  newGuest.value.closeness = ''
+  newGuest.value.name = ''
+  newGuest.value.guestsCount = ''
+  newGuest.value.side = ''
 }
-function  openTable() {
+function openTable() {
+  resetAllErrors()
   openGuestCard.value = false
   openTableCard.value = !openTableCard.value
+
+  newTable.value.placesCount = ''
+  newTable.value.name = ''
 }
 async function addTable() {
   v$2.value.$touch()
@@ -331,13 +352,6 @@ async function addTable() {
     resetAllErrors()
   } catch (err) {
     error.value = err.response.data.error
-  }
-}
-async function generateTables() {
-  try {
-    await store.generateTables()
-  } catch (error) {
-    console.log(error)
   }
 }
 function resetError() {

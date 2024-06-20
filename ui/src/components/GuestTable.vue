@@ -1,19 +1,19 @@
 <template>
   <table class="min-w-full">
     <thead>
-    <tr class="border-b border-blue-200">
+    <tr class="border-b-2 border-primary-color">
       <th
           v-for="(title, index) in titles"
           :key="index"
           scope="col"
-          class="py-3.5 px-3 text-left text-sm font-bold text-blue-700"
+          class="py-3.5 px-3 text-left text-sm font-bold text-primary-color"
       >
         {{ title }}
       </th>
     </tr>
     </thead>
 
-    <tbody class="divide-y divide-blue-200 bg-white divide-y divide-blue-200">
+    <tbody class="divide-y">
     <tr v-for="content in contents" :key="content.id">
       <td
           v-for="(col, index) in content"
