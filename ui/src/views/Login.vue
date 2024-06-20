@@ -72,7 +72,6 @@ import { useRouter } from "vue-router";
 import { email, required } from "@vuelidate/validators";
 import useVuelidate from "@vuelidate/core";
 import { useStore } from "@/store/index.js";
-
 const store = useStore()
 const router = useRouter()
 const error = ref('')
