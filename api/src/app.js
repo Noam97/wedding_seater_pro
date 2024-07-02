@@ -4,7 +4,7 @@ import bodyParser from "body-parser";
 import bcrypt from "bcrypt";
 import {PrismaClient} from "@prisma/client";
 import jwt from 'jsonwebtoken';
-
+import { authenticateToken } from './middleware/auth.js'
 
 const app = express();
 app.use(cors())
@@ -29,7 +29,7 @@ app.post('/api/login', async (request, response) => {
             if(err) return response.status(422).send({ error: 'Email or password is invalid' });
 
             if(res) {
-                const token = jwt.sign({userId : user.id}, 'JWT_SECRET', {expiresIn: '1h'});
+                const token = jwt.sign({ userId : user.id }, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'});
                 return response.send({token});
             }
             else
@@ -68,7 +68,7 @@ app.post('/api/register', async (req, res) => {
     }
 })
 
-app.post('/api/guests', async (req, res) => {
+app.post('/api/guests', authenticateToken, async (req, res) => {
     try {
         const { name, guestsCount, side, closeness } = req.body
 
@@ -82,6 +82,7 @@ app.post('/api/guests', async (req, res) => {
                 count: guestsCount,
                 side,
                 closeness,
+                user_id: req.user.id
             },
         });
 
@@ -92,16 +93,23 @@ app.post('/api/guests', async (req, res) => {
     }
 })
 
-app.get('/api/guests', async (req, res) => {
+app.get('/api/guests', authenticateToken, async (req, res) => {
     try {
-        const guests = await prisma.guest.findMany();
+        const guests = await prisma.guest.findMany({
+            where: {
+                user_id: req.user.id
+            },
+            include: {
+                table: true,
+            },
+        });
         res.status(200).json(guests);
     } catch (error) {
         res.status(500).json({ error: 'Internal server error' });
     }
 })
 
-app.post('/api/tables', async (req, res) => {
+app.post('/api/tables', authenticateToken, async (req, res) => {
     try {
         const { name, placesCount } = req.body
 
@@ -109,21 +117,35 @@ app.post('/api/tables', async (req, res) => {
             return res.status(400).send({ error: 'The payload is missing' })
 
         // Create a new guest into the database
-        const newGuest = await prisma.table.create({
+        const newTable = await prisma.table.create({
             data: {
                 name,
-                places_count: placesCount
+                places_count: placesCount,
+                user_id: req.user.id
             },
         });
 
-        res.status(201).json(newGuest);
+        res.status(201).json(newTable);
     } catch (error) {
         console.error('Error creating a guest:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 })
 
-app.get('/api/tables', async (req, res) => {
+app.get('/api/tables', authenticateToken, async (req, res) => {
+    try {
+        const tables = await prisma.table.findMany({
+            where: {
+                user_id: req.user.id
+            }
+        });
+        res.status(200).json(tables);
+    } catch (error) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+})
+
+app.post('/api/tables/generate', authenticateToken, async (req, res) => {
     try {
         const guests = await prisma.table.findMany();
         res.status(200).json(guests);

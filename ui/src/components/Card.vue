@@ -1,22 +1,32 @@
 <template>
-  <div class="flex justify-around gap-16 border border-blue-200 rounded-xl shadow-md px-6 py-2 w-full">
+  <div class="flex justify-around items-center gap-16 border border-purple-300 rounded-xl shadow-md px-6 py-2 w-full">
     <div class="flex items-center gap-3 h-[80px]">
       <img src="../assets/images/brideAndGroom.png" alt="wedding brideAndGroom" class="w-16 h-16" />
       <div class="flex flex-col">
         <span class="text-3xl">
-          250
+          {{ brideCount + groomCount }}
         </span>
         <span class="text-xs">
-          guests
+          guest{{ brideCount + groomCount > 1 ? 's' : '' }}
         </span>
       </div>
-      <div class="flex flex-col justify-evenly h-full">
-        <span class="text-xs">
-          130 brides
-        </span>
-        <span class="text-xs">
-          120 grooms
-        </span>
+      <div class="flex gap-4 items-center h-full">
+        <div class="flex flex-col">
+          <span class="text-sm font-medium">
+            {{ brideCount }}
+          </span>
+          <span class="text-sm font-medium">
+            {{ groomCount }}
+          </span>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-xs">
+            bride
+          </span>
+          <span class="text-xs">
+            grooms
+          </span>
+        </div>
       </div>
     </div>
 
@@ -24,10 +34,10 @@
       <img src="../assets/images/letter.png" alt="wedding brideAndGroom" class="w-16 h-16" />
       <div class="flex flex-col">
         <span class="text-3xl">
-          25
+          {{ invitations }}
         </span>
         <span class="text-xs">
-          invitations
+          invitation{{invitations > 1 ? 's' : ''}}
         </span>
       </div>
     </div>
@@ -42,9 +52,44 @@
         </span>
       </div>
     </div>
+
+    <button
+        @click="generateTables"
+        class="duration-300 border-2 border-primary-color bg-primary-color text-white rounded-xl px-10 py-2 hover:shadow-md"
+    >
+      Generate tables
+    </button>
+
   </div>
 </template>
 
-<style scoped>
+<script setup>
+import { useStore } from "@/store/index.js";
 
-</style>
+defineProps({
+  brideCount: {
+    type: Number,
+    default: 0,
+    required: true
+  },
+  groomCount: {
+    type: Number,
+    default: 0,
+    required: true
+  },
+  invitations: {
+    type: Number,
+    default: 0,
+    required: true
+  }
+})
+const store = useStore();
+
+async function generateTables() {
+  try {
+    await store.generateTables()
+  } catch (error) {
+    console.log(error)
+  }
+}
+</script>
