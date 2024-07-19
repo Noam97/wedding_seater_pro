@@ -24,7 +24,7 @@
             bride
           </span>
           <span class="text-xs">
-            grooms
+            groom
           </span>
         </div>
       </div>
@@ -43,15 +43,37 @@
     </div>
 
     <div class="flex items-center gap-3 h-[80px]">
-      <div class="flex flex-col">
-        <span class="text-lg">
-          Export from excel
-        </span>
-        <span class="text-lg">
-          Import to excel
-        </span>
+      <img src="../assets/images/table.png" alt="wedding brideAndGroom" class="w-16 h-16" />
+      <div class="flex gap-4 items-center h-full">
+        <div class="flex flex-col">
+          <span class="text-sm font-medium">
+            {{ tablesCount }}
+          </span>
+          <span class="text-sm font-medium">
+            {{ chairsCount }}
+          </span>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-xs">
+            tables
+          </span>
+          <span class="text-xs">
+            chairs
+          </span>
+        </div>
       </div>
     </div>
+
+    <!--    <div class="flex items-center gap-3 h-[80px]">-->
+    <!--      <div class="flex flex-col">-->
+    <!--        <span class="text-lg">-->
+    <!--          Export from excel-->
+    <!--        </span>-->
+    <!--        <span class="text-lg">-->
+    <!--          Import to excel-->
+    <!--        </span>-->
+    <!--      </div>-->
+    <!--    </div>-->
 
     <button
         @click="generateTables"
@@ -64,7 +86,7 @@
 </template>
 
 <script setup>
-import { useStore } from "@/store/index.js";
+import {useRouter} from "vue-router";
 
 defineProps({
   brideCount: {
@@ -81,15 +103,21 @@ defineProps({
     type: Number,
     default: 0,
     required: true
+  },
+  chairsCount: {
+    type: Number,
+    default: 0,
+    required: true
+  },
+  tablesCount: {
+    type: Number,
+    default: 0,
+    required: true
   }
 })
-const store = useStore();
+const router = useRouter();
 
 async function generateTables() {
-  try {
-    await store.generateTables()
-  } catch (error) {
-    console.log(error)
-  }
+  router.push('/table')
 }
 </script>

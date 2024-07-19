@@ -4,7 +4,7 @@
       Guest Management
     </h1>
 
-    <Card :bride-count="countFromBride" :groom-count="countFromGroom" :invitations="invitations" />
+    <Card :bride-count="countFromBride" :groom-count="countFromGroom" :invitations="invitations" :tables-count="tablesCount" :chairs-count="chairsCount" />
 
     <div class="flex justify-center gap-6">
       <button
@@ -49,7 +49,7 @@
         <input
             @input="resetError"
             v-model="newGuest.guestsCount"
-            placeholder="Guest's count"
+            placeholder="Guest count"
             type="number"
             class="input"
         />
@@ -149,7 +149,7 @@
         <input
             @input="resetError"
             v-model="newTable.placesCount"
-            placeholder="Guest's count"
+            placeholder="Guest count"
             type="number"
             class="input"
         />
@@ -252,8 +252,11 @@ const v$2 = useVuelidate(rules2, newTable)
 const countFromBride = ref(0)
 const countFromGroom = ref(0)
 const invitations = ref(0)
+const tablesCount = ref(0)
+const chairsCount = ref(0)
 
 getGuests()
+getTables()
 async function addGuest() {
   v$.value.$touch()
   if(v$.value.$invalid) {
@@ -273,7 +276,7 @@ async function addGuest() {
       response.data.count,
       response.data.side,
       closenessName,
-      'NaN',
+      response.data['table_id'] !== null ? response.data.table : 'NaN',
     ])
 
     if(response.data.side === 'bride')
@@ -307,7 +310,7 @@ async function getGuests() {
         item.count,
         item.side,
         closenessName,
-        'NaN',
+        item.table !== null ? item.table.name : 'NaN',
       ])
 
       if(item.side === 'bride')
@@ -315,6 +318,18 @@ async function getGuests() {
       else countFromGroom.value += item.count
     })
     invitations.value = response.data.length
+  } catch (error) {
+    console.log(error)
+  }
+}
+async function getTables() {
+  try {
+    const response = await store.getTables()
+
+    response.data.map(item => {
+      chairsCount.value += item.places_count
+    })
+    tablesCount.value = response.data.length
   } catch (error) {
     console.log(error)
   }
@@ -345,6 +360,9 @@ async function addTable() {
 
   try {
     await store.createTable(newTable.value)
+
+    chairsCount.value += parseInt(newTable.value.placesCount)
+    tablesCount.value ++
 
     newTable.value.placesCount = ''
     newTable.value.name = ''
