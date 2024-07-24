@@ -20,7 +20,7 @@ model User {
 
 model Table {
   id Int @id @default(autoincrement())
-  name String
+  table_number Int @unique
   places_count Int
   guests Guest[]
   user User @relation(fields: [user_id], references: [id])

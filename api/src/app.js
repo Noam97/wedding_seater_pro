@@ -111,15 +111,22 @@ app.get('/api/guests', authenticateToken, async (req, res) => {
 
 app.post('/api/tables', authenticateToken, async (req, res) => {
     try {
-        const { name, placesCount } = req.body
-
-        if (!name.length || !placesCount)
+        const { tableNumber, placesCount } = req.body
+        if (!tableNumber || !placesCount)
             return res.status(400).send({ error: 'The payload is missing' })
+        const tableDoesExist = await prisma.table.findUnique({
+            where: {
+                table_number: tableNumber
+            },
+        })
+        console.log(tableDoesExist)
+        if (tableDoesExist)
+            return res.status(422).send({ error: 'The number table already exist'})
 
         // Create a new guest into the database
         const newTable = await prisma.table.create({
             data: {
-                name,
+                table_number: parseInt(tableNumber),
                 places_count: placesCount,
                 user_id: req.user.id
             },

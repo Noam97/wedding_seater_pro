@@ -54,12 +54,13 @@
             type="button"
             @click="router.push('/register')"
             class="absolute left-0 duration-300 tracking-wider text-primary-color text-xs py-1 px-3 whitespace-nowrap border-b-2 border-transparent hover:border-primary-color">
+          Don't have an account? <br>
           Register here
         </button>
         <button
             type="submit"
             class="duration-300 border-2 border-primary-color rounded-full tracking-wider text-primary-color py-2 px-5 hover:bg-primary-color hover:text-white">
-          Send
+          Sign in
         </button>
       </div>
     </form>

@@ -40,7 +40,7 @@
 
         <transition name="slide-fade">
             <span v-if="v$.name.$error" class="error-msg">
-              {{ v$.name.$errors[0].$message }}
+              {{ v$.name.$errors[0]?.$message }}
             </span>
         </transition>
       </div>
@@ -56,7 +56,7 @@
 
         <transition name="slide-fade">
             <span v-if="v$.guestsCount.$error" class="error-msg">
-              {{ v$.guestsCount.$errors[0].$message }}
+              {{ v$.guestsCount.$errors[0]?.$message }}
             </span>
         </transition>
       </div>
@@ -80,7 +80,7 @@
 
         <transition name="slide-fade">
             <span v-if="v$.side.$error" class="error-msg">
-              {{ v$.side.$errors[0].$message }}
+              {{ v$.side.$errors[0]?.$message }}
             </span>
         </transition>
       </div>
@@ -102,7 +102,7 @@
 
         <transition name="slide-fade">
           <span v-if="v$.closeness.$error" class="error-msg">
-            {{ v$.closeness.$errors[0].$message }}
+            {{ v$.closeness.$errors[0]?.$message }}
           </span>
         </transition>
       </div>
@@ -132,15 +132,18 @@
       <div class="relative flex flex-col w-full">
         <input
             @input="resetError"
-            v-model="newTable.name"
-            placeholder="Table's Name"
-            type="text"
+            v-model="newTable.tableNumber"
+            placeholder="Table Number"
+            type="number"
             class="input"
         />
 
         <transition name="slide-fade">
-            <span v-if="v$2.name.$error" class="error-msg">
-              {{ v$2.name.$errors[0].$message }}
+            <span v-if="v$2.tableNumber.$error" class="error-msg">
+              {{ v$2.tableNumber.$errors[0]?.$message }}
+            </span>
+          <span v-else-if="uniqueError.length" class="error-msg">
+            {{uniqueError}}
             </span>
         </transition>
       </div>
@@ -152,11 +155,13 @@
             placeholder="Guest count"
             type="number"
             class="input"
+            min="5"
+            max="20"
         />
 
         <transition name="slide-fade">
             <span v-if="v$2.placesCount.$error" class="error-msg">
-              {{ v$2.placesCount.$errors[0].$message }}
+              {{ v$2.placesCount.$errors[0]?.$message }}
             </span>
         </transition>
       </div>
@@ -201,7 +206,7 @@ const newGuest = ref({
   closeness: '',
 })
 const newTable = ref({
-  name: '',
+  tableNumber: '',
   placesCount: '',
 })
 const closenessList = ref([
@@ -220,6 +225,10 @@ const closenessList = ref([
   }, {
     value: "parents_guests",
     name: "Parents' guests"
+  },
+  {
+    value: "other",
+    name: "Other"
   }
 ])
 const titles = ref(['Name', "Guest's count", 'Side', 'Closeness', 'Table Number'])
@@ -231,19 +240,19 @@ const rules = {
     required,
     minValue: helpers.withMessage(
         "The minimum is 0",
-        helpers.withAsync((value) => value > 0)
+        helpers.withAsync((value) => value >= 0)
     )
   },
   side: { required },
   closeness: { required },
 }
 const rules2 = {
-  name: { required },
+  tableNumber: { required },
   placesCount: {
     required,
     minValue: helpers.withMessage(
-        "The minimum is 0",
-        helpers.withAsync((value) => value > 0)
+        "The minimum is 5",
+        helpers.withAsync((value) => value >= 5)
     )
   },
 }
@@ -254,6 +263,7 @@ const countFromGroom = ref(0)
 const invitations = ref(0)
 const tablesCount = ref(0)
 const chairsCount = ref(0)
+const uniqueError = ref('')
 
 getGuests()
 getTables()
@@ -365,15 +375,19 @@ async function addTable() {
     tablesCount.value ++
 
     newTable.value.placesCount = ''
-    newTable.value.name = ''
+    newTable.value.tableNumber = ''
 
     resetAllErrors()
   } catch (err) {
-    error.value = err.response.data.error
+    if (err.response.status === 422)
+      uniqueError.value = err.response.data.error
+    else
+      error.value = err.response.data.error
   }
 }
 function resetError() {
   error.value = ''
+  uniqueError.value = ''
 }
 function resetAllErrors() {
   v$.value.$reset()
