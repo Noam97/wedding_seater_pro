@@ -24,6 +24,12 @@
           {{ col }}
         </div>
       </td>
+      <td>
+        <img  src="../assets/images/edit.jpg" alt="Edit" class="w-8 h-8" @click="editItem()" />
+      </td>
+      <td>
+        <img src="../assets/images/delete.jpg" alt="Delete"  class="w-8 h-8"  @click="deleteItem()" />
+      </td>
     </tr>
     </tbody>
   </table>
@@ -40,4 +46,10 @@ defineProps({
     required: true,
   },
 })
+function editItem() {
+  console.log(`Editing item`);
+}
+function deleteItem() {
+  console.log(`Delete item`);
+}
 </script>

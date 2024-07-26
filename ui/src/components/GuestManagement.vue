@@ -184,17 +184,19 @@
       </div>
     </form>
 
-    <guest-table :titles="titles" :contents="contents" />
+
+    <matrix-table v-if="openTableCard" :titles="tablesTableTitles" :contents="tablesTableContents" />
+    <matrix-table v-else :titles="guestsTableTitles" :contents="guestsTableContents" />
   </div>
 </template>
 
 <script setup>
 import Card from "@/components/Card.vue";
-import GuestTable from "@/components/GuestTable.vue";
 import { ref } from "vue";
 import {helpers, required} from "@vuelidate/validators";
 import useVuelidate from "@vuelidate/core";
 import {useStore} from "@/store/index.js";
+import MatrixTable from "@/components/MatrixTable.vue";
 
 const store = useStore()
 const openTableCard = ref(false)
@@ -231,10 +233,11 @@ const closenessList = ref([
     name: "Other"
   }
 ])
-const titles = ref(['Name', "Guest's count", 'Side', 'Closeness'])
-const contents = ref([])
+
+const guestsTableTitles = ref(['Name', "Guest's count", 'Side', 'Closeness'])
+const guestsTableContents = ref([])
 const error = ref('')
-const rules = {
+const guest_rules = {
   name: { required },
   guestsCount: {
     required,
@@ -246,7 +249,9 @@ const rules = {
   side: { required },
   closeness: { required },
 }
-const rules2 = {
+const tablesTableTitles = ref(['Table Number', 'Guest count'])
+const tablesTableContents = ref([])
+const table_rules = {
   tableNumber: { required },
   placesCount: {
     required,
@@ -256,8 +261,8 @@ const rules2 = {
     )
   },
 }
-const v$ = useVuelidate(rules, newGuest)
-const v$2 = useVuelidate(rules2, newTable)
+const v$ = useVuelidate(guest_rules, newGuest)
+const v$2 = useVuelidate(table_rules, newTable)
 const countFromBride = ref(0)
 const countFromGroom = ref(0)
 const invitations = ref(0)
@@ -267,6 +272,7 @@ const uniqueError = ref('')
 
 getGuests()
 getTables()
+
 async function addGuest() {
   v$.value.$touch()
   if(v$.value.$invalid) {
@@ -281,7 +287,7 @@ async function addGuest() {
       if(closeness.value === response.data.closeness)
         closenessName = closeness.name
     })
-    contents.value.unshift([
+    guestsTableContents.value.unshift([
       response.data.name,
       response.data.count,
       response.data.side,
@@ -308,13 +314,13 @@ async function getGuests() {
   try {
     const response = await store.getGuests()
 
-    response.data.map(item => {
+    response.data.forEach(item => {
       let closenessName = ''
       closenessList.value.forEach(closeness => {
         if(closeness.value === item.closeness)
           closenessName = closeness.name
       })
-      contents.value.push([
+      guestsTableContents.value.push([
         item.name,
         item.count,
         item.side,
@@ -333,11 +339,15 @@ async function getGuests() {
 async function getTables() {
   try {
     const response = await store.getTables()
-
-    response.data.map(item => {
-      chairsCount.value += item.places_count
+    console.log(response)
+    response.data.forEach(item => {
+      tablesTableContents.value.push([
+        item.table_number,
+        item.places_count,
+      ])
     })
     tablesCount.value = response.data.length
+
   } catch (error) {
     console.log(error)
   }
@@ -368,12 +378,15 @@ async function addTable() {
 
   try {
     await store.createTable(newTable.value)
-
+    tablesTableContents.value.push([
+      newTable.value.tableNumber,
+      newTable.value.placesCount,
+    ])
     chairsCount.value += parseInt(newTable.value.placesCount)
     tablesCount.value ++
 
-    newTable.value.placesCount = ''
     newTable.value.tableNumber = ''
+    newTable.value.placesCount = ''
 
     resetAllErrors()
   } catch (err) {
