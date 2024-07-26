@@ -33,7 +33,7 @@ export const useStore = defineStore('store', () => {
     }
 
     async function generateTables() {
-        return await axiosInstance.get('/tables/generate')
+        return await axiosInstance.post('/tables/generate')
     }
 
     function saveUserInLocalStorage(newToken) {
