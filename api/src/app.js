@@ -186,8 +186,7 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
         });
         const list = []
         let [tableIndex, guestIndex] = [0, 0]
-
-        while(tableIndex < tables.length) {
+        while(tableIndex < tables.length && sortedGuests.length > guestIndex ) {
             if(tables[tableIndex]['places_count'] >= sortedGuests[guestIndex].guestsCount) {
                 list.push({
                     table: tables[tableIndex],

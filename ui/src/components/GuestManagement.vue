@@ -231,7 +231,7 @@ const closenessList = ref([
     name: "Other"
   }
 ])
-const titles = ref(['Name', "Guest's count", 'Side', 'Closeness', 'Table Number'])
+const titles = ref(['Name', "Guest's count", 'Side', 'Closeness'])
 const contents = ref([])
 const error = ref('')
 const rules = {
@@ -286,7 +286,6 @@ async function addGuest() {
       response.data.count,
       response.data.side,
       closenessName,
-      response.data['table_id'] !== null ? response.data.table : 'NaN',
     ])
 
     if(response.data.side === 'bride')
@@ -320,7 +319,6 @@ async function getGuests() {
         item.count,
         item.side,
         closenessName,
-        item.table !== null ? item.table.name : 'NaN',
       ])
 
       if(item.side === 'bride')
