@@ -25,10 +25,12 @@
         </div>
       </td>
       <td>
-        <img  src="../assets/images/edit.jpg" alt="Edit" class="w-8 h-8" @click="editItem()" />
+       <button  @click="$emit('edit', content)" > <img  src="../assets/images/edit.jpg" alt="Edit" class="w-6 h-6" />
+       </button>
       </td>
       <td>
-        <img src="../assets/images/delete.jpg" alt="Delete"  class="w-8 h-8"  @click="deleteItem()" />
+        <button @click="$emit('delete', content)" > <img src="../assets/images/delete.jpg" alt="Delete"  class="w-6 h-6" />
+        </button>
       </td>
     </tr>
     </tbody>
@@ -46,10 +48,6 @@ defineProps({
     required: true,
   },
 })
-function editItem() {
-  console.log(`Editing item`);
-}
-function deleteItem() {
-  console.log(`Delete item`);
-}
+defineEmits(['edit', 'delete'])
+
 </script>

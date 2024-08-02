@@ -23,13 +23,18 @@ export const useStore = defineStore('store', () => {
     async function getGuests() {
         return await axiosInstance.get('/guests')
     }
-
+    async function deleteGuest(id) {
+        return await axiosInstance.delete(`/guests/${id}`)
+    }
     async function createTable(payload) {
         return await axiosInstance.post('/tables', payload)
     }
 
     async function getTables() {
         return await axiosInstance.get('/tables')
+    }
+    async function deleteTable(tableNumber) {
+        return await axiosInstance.delete(`/tables/${tableNumber}`)
     }
 
     async function generateTables() {
@@ -52,7 +57,9 @@ export const useStore = defineStore('store', () => {
         login,
         createGuest,
         getGuests,
+        deleteGuest,
         createTable,
+        deleteTable,
         getTables,
         generateTables,
         saveUserInLocalStorage,
