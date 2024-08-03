@@ -20,11 +20,12 @@ model User {
 
 model Table {
   id Int @id @default(autoincrement())
-  table_number Int @unique
+  table_number Int
   places_count Int
   guests Guest[]
   user User @relation(fields: [user_id], references: [id])
   user_id Int
+  @@unique([user_id, table_number])
 }
 
 model Guest {

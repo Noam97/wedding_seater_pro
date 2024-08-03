@@ -116,9 +116,12 @@ app.post('/api/tables', authenticateToken, async (req, res) => {
             return res.status(400).send({ error: 'The payload is missing' })
         const tableDoesExist = await prisma.table.findUnique({
             where: {
-                table_number: tableNumber
+                table_number: tableNumber,
+                user_id: req.user.id
+
             },
         })
+        console.log()
         console.log(tableDoesExist)
         if (tableDoesExist)
             return res.status(422).send({ error: 'The number table already exist'})
@@ -131,6 +134,7 @@ app.post('/api/tables', authenticateToken, async (req, res) => {
                 user_id: req.user.id
             },
         });
+       // console.log("table: " + newTable)
 
         res.status(201).json(newTable);
     } catch (error) {
@@ -173,6 +177,8 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
             acc[key].guests.push(guest);
             return acc;
         }, {});
+        console.log(guestsByUser)
+        console.log(groupedGuests)
 
         let sortedGuests = Object.values(groupedGuests).sort((a, b) => b.guestsCount - a.guestsCount);
 
@@ -273,6 +279,35 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
         res.status(201).json(list);
     } catch (error) {
         console.log('error', error)
+        res.status(500).json({ error: 'Internal server error' });
+    }
+})
+
+
+app.delete('/api/tables/:tableNumber', authenticateToken, async (req, res) => {
+    try {
+        const {tableNumber} = req.params
+        console.log(tableNumber)
+        await prisma.table.delete({
+            where: {
+                table_number: parseInt(tableNumber),
+            },
+        });
+        res.status(200).json();
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ error: 'Internal server error' });
+    }
+})
+
+app.delete('/api/guests/:id', authenticateToken, async (req, res) => {
+    try {
+        const {id} = req.params
+        await prisma.guest.delete({
+            where: { id: parseInt(id) },
+        });
+        res.status(200).json();
+    } catch (error) {
         res.status(500).json({ error: 'Internal server error' });
     }
 })

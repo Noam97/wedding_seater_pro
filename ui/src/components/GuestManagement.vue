@@ -137,6 +137,7 @@
             placeholder="Table Number"
             type="number"
             class="input"
+            min = 1
         />
 
         <transition name="slide-fade">
@@ -369,61 +370,40 @@ async function deleteGuest(guest) {
     console.log(error);
   }
 }
-
-// async function deleteGuest(guest) {
+//
+// async function getTables() {
 //   try {
-//     await store.deleteGuest(guest[0])
-//     guestsTableContents.value = guestsTableContents.value.filter(item => {
-//       if (item[0] !== guest[0]) {
-//         return true;
-//       } else {
-//         console.log("item:" , item)
-//         console.log("item[0]:" , item)
-//         const response =  store.getGuests();
-//         console.log("response:",response)
-//         const allGuests = response.data;
-//         const guestToDelete = allGuests.find(item => item.id === guest[0]);
-//
-//
-//         if (guestToDelete.side === 'bride') {
-//           //     console.log("bride: " ,countFromBride.value)
-//           //     console.log("item.count", item.count)
-//           //
-//           countFromBride.value -= item.count;
-//         } else {
-//           //     console.log("groom: " ,countFromGroom.value)
-//           //     console.log("item.count", item.count)
-//           //
-//           countFromGroom.value -= item.count;
-//         }
-//         //   return false;
-//       }
-//     });
-//
-//     const response = await store.getGuests();
-//     invitations.value = response.data.length;
-//
+//     const response = await store.getTables()
+//     // console.log(response)
+//     response.data.forEach(item => {
+//       tablesTableContents.value.push([
+//         item.table_number,
+//         item.places_count,
+//       ])
+//     })
+//     tablesCount.value = response.data.length
+//     // console.log("response:" ,response)
 //   } catch (error) {
-//     console.log(error);
+//     console.log(error)
 //   }
 // }
 
 async function getTables() {
   try {
     const response = await store.getTables()
-    // console.log(response)
-    response.data.forEach(item => {
-      tablesTableContents.value.push([
-        item.table_number,
-        item.places_count,
-      ])
+    let totalChairs = 0;
+    response.data.forEach((item) => {
+      tablesTableContents.value.push([item.table_number, item.places_count])
+      totalChairs += parseInt(item.places_count)
     })
     tablesCount.value = response.data.length
-
+    chairsCount.value = totalChairs
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
 }
+
+
 function openGuest() {
   resetAllErrors()
   openTableCard.value = false
@@ -473,17 +453,13 @@ function editTable(table){
 }
 async function deleteTable(table){
   try {
-    console.log(table[0])
     await store.deleteTable(table[0])
-    // console.log(   "tablesTableContents.value",    tablesTableContents.value)
     tablesTableContents.value = tablesTableContents.value.filter(item => {
       if (item[0] !== table[0]) {
         return true
       } else {
-        const response = store.getTables()
-        console.log("response: ", response)
-        // tablesCount.value = response.data.length
         chairsCount.value -= item[1]
+        tablesCount.value--
       }
     })
   }
