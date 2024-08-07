@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen flex flex-col gap-6 items-center p-10">
-    <h1 class="text-3xl text-primary-color uppercase">
+    <h1 class="text-4xl text-primary-color uppercase">
       Guest Management
     </h1>
 
@@ -186,11 +186,13 @@
       </div>
     </form>
 
+    <div class="w-3/4">
+      <matrix-table v-if="openTableCard" :titles="tablesTableTitles" :contents="tablesTableContents" @edit="editTable"
+                    @delete="deleteTable"  />
+      <matrix-table v-else :titles="guestsTableTitles" :contents="guestsTableContents" @edit="editGuest"
+                    @delete="deleteGuest" />
+    </div>
 
-    <matrix-table v-if="openTableCard" :titles="tablesTableTitles" :contents="tablesTableContents" @edit="editTable"
-                  @delete="deleteTable"  />
-    <matrix-table v-else :titles="guestsTableTitles" :contents="guestsTableContents" @edit="editGuest"
-                  @delete="deleteGuest" />
   </div>
 </template>
 
@@ -238,7 +240,7 @@ const closenessList = ref([
   }
 ])
 
-const guestsTableTitles = ref(['Id', 'Name', "Guest's count", 'Side', 'Closeness'])
+const guestsTableTitles = ref(['Name', "Guest's count", 'Side', 'Closeness'])
 const guestsTableContents = ref([])
 const error = ref('')
 const guest_rules = {
@@ -326,11 +328,11 @@ async function getGuests() {
           closenessName = closeness.name
       })
       guestsTableContents.value.push([
-        item.id,
         item.name,
         item.count,
         item.side,
         closenessName,
+        {id: item.id}
       ])
 
       if(item.side === 'bride')
@@ -348,15 +350,18 @@ async function editGuest(guest){
 
 async function deleteGuest(guest) {
   try {
-    await store.deleteGuest(guest[0])
+    const idObject = guest.find((element => typeof element === 'object'))
+    await store.deleteGuest(idObject.id)
     guestsTableContents.value = guestsTableContents.value.filter(item => {
-      if (item[0] !== guest[0]) {
+      const itemIdObject =  item.find((element => typeof element === 'object'))
+      console.log(itemIdObject, idObject)
+      if (itemIdObject.id !== idObject.id) {
         return true;
       } else {
-        if (item[3] === 'bride') {
-          countFromBride.value -= item[2];
+        if (item[2] === 'bride') {
+          countFromBride.value -= item[1];
         } else {
-          countFromGroom.value -= item[2];
+          countFromGroom.value -= item[1];
           countFromBride.value =  countFromBride.value
         }
         return false;
@@ -370,7 +375,7 @@ async function deleteGuest(guest) {
     console.log(error);
   }
 }
-//
+
 // async function getTables() {
 //   try {
 //     const response = await store.getTables()

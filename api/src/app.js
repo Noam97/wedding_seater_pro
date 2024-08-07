@@ -114,16 +114,16 @@ app.post('/api/tables', authenticateToken, async (req, res) => {
         const { tableNumber, placesCount } = req.body
         if (!tableNumber || !placesCount)
             return res.status(400).send({ error: 'The payload is missing' })
-        const tableDoesExist = await prisma.table.findUnique({
+        console.log( " req.user.id", req.user.id)
+        const tableDoesExist = await prisma.table.findMany({
             where: {
                 table_number: tableNumber,
                 user_id: req.user.id
 
             },
         })
-        console.log()
         console.log(tableDoesExist)
-        if (tableDoesExist)
+        if (tableDoesExist.length)
             return res.status(422).send({ error: 'The number table already exist'})
 
         // Create a new guest into the database
@@ -177,8 +177,8 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
             acc[key].guests.push(guest);
             return acc;
         }, {});
-        console.log(guestsByUser)
-        console.log(groupedGuests)
+        // console.log('guestbyuser: ',guestsByUser);
+        // console.log('groupedGuests: ', groupedGuests);
 
         let sortedGuests = Object.values(groupedGuests).sort((a, b) => b.guestsCount - a.guestsCount);
 
@@ -192,6 +192,20 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
         });
         const list = []
         let [tableIndex, guestIndex] = [0, 0]
+        let totalPlacesCount = 0
+        tables.forEach((table) => {
+            totalPlacesCount += table.places_count
+        })
+        console.log('tables: ', totalPlacesCount)
+
+        let totalGuests = 0
+        guestsByUser.forEach((guest) => {
+            totalGuests += guest.count
+        })
+        console.log('totalGuests: ', totalGuests)
+        if (totalGuests > totalPlacesCount) {
+            return res.status(422).send({error: "The guests number is smaller than chairs number"})
+        }
         while(tableIndex < tables.length && sortedGuests.length > guestIndex ) {
             if(tables[tableIndex]['places_count'] >= sortedGuests[guestIndex].guestsCount) {
                 list.push({
@@ -287,10 +301,13 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
 app.delete('/api/tables/:tableNumber', authenticateToken, async (req, res) => {
     try {
         const {tableNumber} = req.params
-        console.log(tableNumber)
+        console.log("userid:" ,req.user.id)
         await prisma.table.delete({
             where: {
-                table_number: parseInt(tableNumber),
+                user_id_table_number: {
+                    table_number: parseInt(tableNumber),
+                    user_id: req.user.id
+                }
             },
         });
         res.status(200).json();

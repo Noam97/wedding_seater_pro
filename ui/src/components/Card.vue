@@ -6,24 +6,24 @@
         <span class="text-3xl">
           {{ brideCount + groomCount }}
         </span>
-        <span class="text-xs">
+        <span class="text-xl">
           guest{{ brideCount + groomCount > 1 ? 's' : '' }}
         </span>
       </div>
       <div class="flex gap-4 items-center h-full">
         <div class="flex flex-col">
-          <span class="text-sm font-medium">
+          <span class="text-lg font-medium">
             {{ brideCount }}
           </span>
-          <span class="text-sm font-medium">
+          <span class="text-lg font-medium">
             {{ groomCount }}
           </span>
         </div>
         <div class="flex flex-col">
-          <span class="text-xs">
+          <span class="text-xl">
             bride's side
           </span>
-          <span class="text-xs">
+          <span class="text-xl">
             groom's side
           </span>
         </div>
@@ -36,7 +36,7 @@
         <span class="text-3xl">
           {{ invitations }}
         </span>
-        <span class="text-xs">
+        <span class="text-xl">
           invitation{{invitations > 1 ? 's' : ''}}
         </span>
       </div>
@@ -46,18 +46,18 @@
       <img src="../assets/images/table.png" alt="wedding brideAndGroom" class="w-16 h-16" />
       <div class="flex gap-4 items-center h-full">
         <div class="flex flex-col">
-          <span class="text-sm font-medium">
+          <span class="text=lg font-medium">
             {{ tablesCount }}
           </span>
-          <span class="text-sm font-medium">
+          <span class="text=lg font-medium">
             {{ chairsCount }}
           </span>
         </div>
         <div class="flex flex-col">
-          <span class="text-xs">
+          <span class="text-xl">
             tables
           </span>
-          <span class="text-xs">
+          <span class="text-xl">
             chairs
           </span>
         </div>
