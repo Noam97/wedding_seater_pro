@@ -294,11 +294,11 @@ async function addGuest() {
         closenessName = closeness.name
     })
     guestsTableContents.value.unshift([
-      response.data.id,
       response.data.name,
       response.data.count,
       response.data.side,
       closenessName,
+      { id: response.data.id }
     ])
     console.log(" guestsTableContents.value: "  +  guestsTableContents.value )
     if(response.data.side === 'bride')
