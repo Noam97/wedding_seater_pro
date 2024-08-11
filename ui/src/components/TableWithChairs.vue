@@ -1,15 +1,20 @@
 <template>
   <div class="table-container">
+
     <div class="flex flex-wrap justify-center items-center h-full gap-x-2">
-      <div v-for="(person, peopleIndex) in people" :key="`person_${peopleIndex}`" class="text-xs border border-primary-color bg-primary-color text-gray-300 rounded-xl px-2 py-1">
-        ({{ person.count }}) {{ person.name }}
-      </div>
+      <tooltip text="This is a tooltip">
+        Hover over me!
+      </tooltip>
+<!--      <div v-for="(person, peopleIndex) in people" :key="`person_${peopleIndex}`" class="text-xs border border-primary-color bg-primary-color text-gray-300 rounded-xl px-2 py-1">-->
+<!--        ({{ person.count }}) {{ person.name }}-->
+<!--      </div>-->
     </div>
     <div class="chair" :class="index < guestsCount ? 'active' : 'no-active'" v-for="(chair, index) in chairs" :key="`chair_${index}`" :style="getChairStyle(index)" />
   </div>
 </template>
 
 <script setup>
+import Tooltip from "@/components/Tooltip.vue";
 const props = defineProps({
   guestsCount: {
     type: Number,
