@@ -1,13 +1,17 @@
 <template>
   <div class="table-container">
 
-    <div class="flex flex-wrap justify-center items-center h-full gap-x-2">
-      <tooltip text="This is a tooltip">
-        Hover over me!
+    <div class="flex flex-wrap justify-center items-center h-full gap-x-2 text-4xl">
+      <tooltip>
+        <template #content><div>[{{tableNumber}}] </div></template>
+        <template #text>
+          <div class= "flex gap-2 flex-col ">
+          <div v-for="(person, peopleIndex) in people" :key="`person_${peopleIndex}`"
+               class="whitespace-nowrap text-xs border border-primary-color bg-primary-color text-gray-300 rounded-xl px-2 py-1">
+            ({{ person.count }}) {{ person.name }}
+          </div></div></template>
+
       </tooltip>
-<!--      <div v-for="(person, peopleIndex) in people" :key="`person_${peopleIndex}`" class="text-xs border border-primary-color bg-primary-color text-gray-300 rounded-xl px-2 py-1">-->
-<!--        ({{ person.count }}) {{ person.name }}-->
-<!--      </div>-->
     </div>
     <div class="chair" :class="index < guestsCount ? 'active' : 'no-active'" v-for="(chair, index) in chairs" :key="`chair_${index}`" :style="getChairStyle(index)" />
   </div>
@@ -30,7 +34,12 @@ const props = defineProps({
     type: Array,
     default: [],
     required: true
-  }
+  },
+  tableNumber: {
+    type: Number,
+    default: 0,
+    required: true
+  },
 })
 
 function getChairStyle(index) {
