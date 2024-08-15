@@ -1,21 +1,22 @@
 <template>
   <div class="table-container">
-
     <div class="flex flex-wrap justify-center items-center h-full gap-x-2 text-4xl">
       <tooltip>
         <template #content><div>[{{tableNumber}}] </div></template>
         <template #text>
-          <div class= "flex gap-2 flex-col ">
-          <div v-for="(person, peopleIndex) in people" :key="`person_${peopleIndex}`"
-               class="whitespace-nowrap text-xs border border-primary-color bg-primary-color text-gray-300 rounded-xl px-2 py-1">
-            ({{ person.count }}) {{ person.name }}
-          </div></div></template>
-
+          <div class="flex gap-2 flex-col">
+            <div v-for="(person, peopleIndex) in people" :key="`person_${peopleIndex}`"
+                 class="whitespace-nowrap text-xs border border-primary-color bg-primary-color text-gray-300 rounded-xl px-2 py-1">
+              ({{ person.count }}) {{ person.name }}
+            </div>
+          </div>
+        </template>
       </tooltip>
     </div>
     <div class="chair" :class="index < guestsCount ? 'active' : 'no-active'" v-for="(chair, index) in chairs" :key="`chair_${index}`" :style="getChairStyle(index)" />
   </div>
 </template>
+
 
 <script setup>
 import Tooltip from "@/components/Tooltip.vue";
