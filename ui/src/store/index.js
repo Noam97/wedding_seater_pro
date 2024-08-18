@@ -8,6 +8,7 @@ export const useStore = defineStore('store', () => {
         ref(JSON.parse(localStorage.getItem('token')))
 
     const getToken = computed(() => token.value)
+
     async function createUser(payload) {
         return await axiosInstance.post('/register', payload)
     }
@@ -23,9 +24,15 @@ export const useStore = defineStore('store', () => {
     async function getGuests() {
         return await axiosInstance.get('/guests')
     }
+
     async function deleteGuest(id) {
         return await axiosInstance.delete(`/guests/${id}`)
     }
+
+    async function updateGuest(id, payload) {
+        return await axiosInstance.put(`/guests/${id}`, payload)
+    }
+
     async function createTable(payload) {
         return await axiosInstance.post('/tables', payload)
     }
@@ -33,6 +40,7 @@ export const useStore = defineStore('store', () => {
     async function getTables() {
         return await axiosInstance.get('/tables')
     }
+
     async function deleteTable(tableNumber) {
         return await axiosInstance.delete(`/tables/${tableNumber}`)
     }
@@ -52,12 +60,12 @@ export const useStore = defineStore('store', () => {
 
     return {
         getToken,
-
         createUser,
         login,
         createGuest,
         getGuests,
         deleteGuest,
+        updateGuest,  // כאן מחזירים את הפעולה החדשה
         createTable,
         deleteTable,
         getTables,

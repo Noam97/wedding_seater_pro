@@ -240,7 +240,7 @@ const closenessList = ref([
   }
 ])
 
-const guestsTableTitles = ref(['Name', "Guest's count", 'Side', 'Closeness'])
+const guestsTableTitles = ref(['Name', "Guest's count", 'Side', 'Closeness', 'Actions'])
 const guestsTableContents = ref([])
 const error = ref('')
 const guest_rules = {
@@ -255,7 +255,7 @@ const guest_rules = {
   side: { required },
   closeness: { required },
 }
-const tablesTableTitles = ref(['Table Number', 'Guest count'])
+const tablesTableTitles = ref(['Table Number', 'Guest count', 'Actions'])
 const tablesTableContents = ref([])
 const table_rules = {
   tableNumber: { required },
@@ -376,23 +376,6 @@ async function deleteGuest(guest) {
   }
 }
 
-// async function getTables() {
-//   try {
-//     const response = await store.getTables()
-//     // console.log(response)
-//     response.data.forEach(item => {
-//       tablesTableContents.value.push([
-//         item.table_number,
-//         item.places_count,
-//       ])
-//     })
-//     tablesCount.value = response.data.length
-//     // console.log("response:" ,response)
-//   } catch (error) {
-//     console.log(error)
-//   }
-// }
-
 async function getTables() {
   try {
     const response = await store.getTables()
@@ -407,7 +390,6 @@ async function getTables() {
     console.log(error);
   }
 }
-
 
 function openGuest() {
   resetAllErrors()
@@ -473,15 +455,6 @@ async function deleteTable(table){
   }
 }
 
-
-// chairsCount.value -= parseInt(response.value.placesCount)
-// tablesCount.value --
-// const response = await store.getTables()
-// console.log(response.data.places_count)
-// console.log("chairs count: " +  tablesTableContents.value)
-// chairsCount.value -= item[1]
-
-// chairsCount.value -= parseInt(response.value.places_count)
 function resetError() {
   error.value = ''
   uniqueError.value = ''

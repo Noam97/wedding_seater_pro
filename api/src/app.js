@@ -109,6 +109,32 @@ app.get('/api/guests', authenticateToken, async (req, res) => {
     }
 })
 
+app.put('/api/guests/:id', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updatedData = req.body;
+
+        const dataToUpdate = {
+            name: updatedData[0],
+            count: updatedData[1],
+            side: updatedData[2],
+            closeness: updatedData[3],
+        };
+
+        const updatedGuest = await prisma.guest.update({
+            where: { id: parseInt(id) },
+            data: dataToUpdate,
+        });
+
+        res.status(200).json(updatedGuest);
+    } catch (error) {
+        console.log('Error during guest update:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+
 app.post('/api/tables', authenticateToken, async (req, res) => {
     try {
         const { tableNumber, placesCount } = req.body
@@ -196,13 +222,11 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
         tables.forEach((table) => {
             totalPlacesCount += table.places_count
         })
-        console.log('tables: ', totalPlacesCount)
 
         let totalGuests = 0
         guestsByUser.forEach((guest) => {
             totalGuests += guest.count
         })
-        console.log('totalGuests: ', totalGuests)
         if (totalGuests > totalPlacesCount) {
             return res.status(422).send({error: "The guests number is smaller than chairs number"})
         }

@@ -15,25 +15,35 @@
     </thead>
 
     <tbody class="divide-y">
-    <tr v-for="content in contents" :key="content.id">
+    <tr v-for="(content, rowIndex) in contents" :key="content.id">
       <td
-          v-for="(col, index) in content"
-          :key="index"
-          :class="typeof col === 'object'  ? 'hidden' : '' "
-          class=" text-center text-lg whitespace-nowrap px-3 py-5 font-semibold"
+          v-for="(col, colIndex) in content"
+          :key="colIndex"
+          :class="typeof col === 'object' ? 'hidden' : ''"
+          class="text-center text-lg whitespace-nowrap px-3 py-5 font-semibold"
       >
-        <div class="text-gray-900">
+        <div v-if="editIndex === rowIndex">
+          <!-- לא ניתן לערוך את side וה-closeness -->
+          <input
+              v-if="colIndex !== 2 && colIndex !== 3"
+              v-model="editableContent[colIndex]"
+              class="input w-full"
+          />
+          <span v-else>{{ col }}</span>
+        </div>
+        <div v-else class="text-gray-900">
           {{ col }}
         </div>
       </td>
-<!--      <td>-->
-<!--       <button  @click="$emit('edit', content)" > <img  src="../assets/images/edit.jpg" alt="Edit" class="w-6 h-6" />-->
-<!--       </button>-->
-<!--      </td>-->
-      <td
-          class=" text-center text-lg whitespace-nowrap px-3 py-5 font-semibold"
-      >
-        <button @click="$emit('delete', content)" > <img src="../assets/images/delete.jpg" alt="Delete"  class="w-6 h-6" />
+      <td class="text-center text-lg whitespace-nowrap px-3 py-5 font-semibold">
+        <button v-if="editIndex === rowIndex" @click="saveEdit(rowIndex)" class="mr-2">
+          <img src="../assets/images/vi.png" alt="Save" class="w-6 h-6" />
+        </button>
+        <button v-else @click="startEdit(rowIndex, content)" class="mr-2">
+          <img src="../assets/images/edit.jpg" alt="Edit" class="w-6 h-6" />
+        </button>
+        <button @click="$emit('delete', content)">
+          <img src="../assets/images/delete.jpg" alt="Delete" class="w-6 h-6" />
         </button>
       </td>
     </tr>
@@ -42,7 +52,10 @@
 </template>
 
 <script setup>
-defineProps({
+import { ref } from 'vue';
+import { useStore } from '@/store';
+
+const props = defineProps({
   titles: {
     type: Array,
     required: true,
@@ -51,7 +64,49 @@ defineProps({
     type: Array,
     required: true,
   },
-})
-defineEmits(['edit', 'delete'])
+});
+defineEmits(['edit', 'delete']);
 
+const editIndex = ref(null);
+const editableContent = ref([]);
+const store = useStore();
+
+const startEdit = (index, content) => {
+  editIndex.value = index;
+  editableContent.value = [...content];
+  console.log("editableContent", editableContent)
+};
+
+const saveEdit = async (index) => {
+  const updatedContent = [...editableContent.value];
+
+  console.log('All contents:', props.contents);
+  console.log('Content at index:', props.contents[index]);
+
+  const idObject = props.contents[index].find(element => typeof element === 'object');
+  const guestId = idObject?.id;
+
+  if (!guestId) {
+    console.error('Guest ID is undefined or missing');
+    return;
+  }
+
+  if (typeof updatedContent[1] === 'string') {
+    updatedContent[1] = parseInt(updatedContent[1], 10);
+  }
+
+  if (isNaN(updatedContent[1])) {
+    console.error('Count value is not a valid number');
+    return;
+  }
+
+  try {
+    await store.updateGuest(guestId, updatedContent);
+    props.contents[index] = updatedContent;
+  } catch (error) {
+    console.error('Failed to save the changes:', error);
+  }
+
+  editIndex.value = null;
+};
 </script>
