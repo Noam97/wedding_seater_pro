@@ -300,7 +300,6 @@ async function addGuest() {
       closenessName,
       { id: response.data.id }
     ])
-    console.log(" guestsTableContents.value: "  +  guestsTableContents.value )
     if(response.data.side === 'bride')
       countFromBride.value += response.data.count
     else countFromGroom.value += response.data.count

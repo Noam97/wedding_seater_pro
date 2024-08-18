@@ -24,21 +24,28 @@
         </ExcelDownload>
       </div>
     </div>
-    <TableWithChairs
-        v-for="(result, index) in results"
-        :key="index"
-        :chairs="result.table['places_count']"
-        :people="result.guests"
-        :guests-count="result.guestsCount"
-        :table-number="result.table['table_number']">
-    </TableWithChairs>
+
+    <div class="tables-container">
+      <div v-for="(result, index) in sortedResults" :key="index" class="table-with-chairs">
+        <h2 class="table-title">Table {{ result.table['table_number'] }}</h2>
+        <draggable
+            :list="result.guests"
+            :group="{ name: 'guests', pull: true, put: true }"
+            @change="onGuestMoved">
+          <template #item="{ element }">
+            <div class="guest-item">
+              <span>{{ element.name }} ({{ element.count }})</span>
+              <i class="fas fa-arrows-alt drag-icon"></i>
+            </div>
+          </template>
+        </draggable>
+      </div>
+    </div>
   </div>
 </template>
 
-
 <script setup>
 import ExcelDownload from '@/components/ExcelDownload.vue';
-import TableWithChairs from "@/components/TableWithChairs.vue";
 import { useStore } from "@/store/index.js";
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
@@ -47,6 +54,10 @@ const store = useStore();
 const router = useRouter();
 let results = ref([]);
 let errGenerate = ref("");
+
+function onGuestMoved(event) {
+  console.log('Guest moved:', event);
+}
 
 async function init() {
   try {
@@ -58,6 +69,10 @@ async function init() {
     results.value = [];
   }
 }
+
+let sortedResults = computed(() => {
+  return results.value.slice().sort((a, b) => a.table['table_number'] - b.table['table_number']);
+});
 
 let excelData = computed(() => {
   const data = results.value.flatMap(result =>
@@ -76,4 +91,38 @@ init();
 </script>
 
 <style scoped>
+.table-with-chairs {
+  width: 300px;
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+.table-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.tables-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  align-items: flex-start;
+  flex-direction: row;
+}
+.guest-item {
+  padding: 5px;
+  margin: 5px 0;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.drag-icon {
+  cursor: grab;
+  margin-left: auto;
+}
 </style>
