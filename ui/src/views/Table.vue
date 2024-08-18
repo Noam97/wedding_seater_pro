@@ -23,6 +23,12 @@
             class="text-lg">
         </ExcelDownload>
       </div>
+      <!-- כפתור שמירה -->
+      <button
+          class="mt-5 duration-300 border-2 border-primary-color bg-primary-color text-white rounded-xl px-10 py-2 hover:shadow-md"
+          @click="saveState">
+        Save
+      </button>
     </div>
 
     <div class="tables-container">
@@ -35,7 +41,7 @@
           <template #item="{ element }">
             <div class="guest-item">
               {{ element.name }} ({{ element.count }})
-              <i class="fas fa-arrows-alt ml-2"></i>
+              <i class="fas fa-arrows-alt ml-2"></i> <!-- אייקון גרירה -->
             </div>
           </template>
         </draggable>
@@ -48,7 +54,7 @@
 import ExcelDownload from '@/components/ExcelDownload.vue';
 import TableWithChairs from "@/components/TableWithChairs.vue";
 import { useStore } from "@/store/index.js";
-import { ref, computed } from "vue";
+import { ref, computed, watchEffect } from "vue";
 import { useRouter } from "vue-router";
 import draggable from 'vuedraggable';
 
@@ -63,7 +69,13 @@ function onGuestMoved(event) {
 
 async function init() {
   try {
-    results.value = (await store.generateTables()).data;
+    // נבדוק אם יש מידע שמור ב-localStorage
+    const savedResults = localStorage.getItem('seatingArrangement');
+    if (savedResults) {
+      results.value = JSON.parse(savedResults);
+    } else {
+      results.value = (await store.generateTables()).data;
+    }
     console.log("Results:", results.value);
   } catch (error) {
     console.log(error);
@@ -72,6 +84,13 @@ async function init() {
   }
 }
 
+// פונקציה לשמירת המצב הנוכחי ב-localStorage
+function saveState() {
+  localStorage.setItem('seatingArrangement', JSON.stringify(results.value));
+  alert('Seating arrangement saved!');
+}
+
+// מיון השולחנות לפי מספר שולחן
 let sortedResults = computed(() => {
   return results.value.slice().sort((a, b) => a.table['table_number'] - b.table['table_number']);
 });
