@@ -34,8 +34,8 @@
             @change="onGuestMoved">
           <template #item="{ element }">
             <div class="guest-item">
-              <span>{{ element.name }} ({{ element.count }})</span>
-              <i class="fas fa-arrows-alt drag-icon"></i>
+              {{ element.name }} ({{ element.count }})
+              <i class="fas fa-arrows-alt ml-2"></i>
             </div>
           </template>
         </draggable>
@@ -46,9 +46,11 @@
 
 <script setup>
 import ExcelDownload from '@/components/ExcelDownload.vue';
+import TableWithChairs from "@/components/TableWithChairs.vue";
 import { useStore } from "@/store/index.js";
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
+import draggable from 'vuedraggable';
 
 const store = useStore();
 const router = useRouter();
@@ -119,10 +121,9 @@ init();
   border-radius: 4px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: space-between; /* מציב את האייקון בצד ימין */
 }
-.drag-icon {
+.fa-arrows-alt {
   cursor: grab;
-  margin-left: auto;
 }
 </style>
