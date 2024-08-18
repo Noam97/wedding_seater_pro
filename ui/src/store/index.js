@@ -49,9 +49,21 @@ export const useStore = defineStore('store', () => {
         return await axiosInstance.post('/tables/generate')
     }
 
-    function saveUserInLocalStorage(newToken) {
+     function saveUserInLocalStorage(newToken) {
         token.value = newToken
         localStorage.setItem('token', JSON.stringify(token.value))
+    }
+
+     function saveStateInLocalStorage(result){
+         localStorage.setItem('seatingArrangement', JSON.stringify(result));
+     }
+
+    async function saveSeatingArrangement(tables) {
+        return await axiosInstance.post('/tables/save', { tables });
+    }
+
+    function removeStateFromLocalStorage(){
+        localStorage.removeItem('seatingArrangement');
     }
 
     function logout() {
@@ -65,10 +77,13 @@ export const useStore = defineStore('store', () => {
         createGuest,
         getGuests,
         deleteGuest,
-        updateGuest,  // כאן מחזירים את הפעולה החדשה
+        updateGuest,
         createTable,
         deleteTable,
         getTables,
+        saveStateInLocalStorage,
+        saveSeatingArrangement,
+        removeStateFromLocalStorage,
         generateTables,
         saveUserInLocalStorage,
         logout

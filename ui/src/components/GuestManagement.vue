@@ -287,6 +287,7 @@ async function addGuest() {
 
   try {
     const response = await store.createGuest(newGuest.value)
+    store.removeStateFromLocalStorage()
 
     let closenessName = ''
     closenessList.value.forEach(closeness => {
@@ -344,6 +345,7 @@ async function getGuests() {
   }
 }
 async function editGuest(guest){
+  store.removeStateFromLocalStorage()
   console.log(guest)
 }
 
@@ -369,6 +371,8 @@ async function deleteGuest(guest) {
 
     const response = await store.getGuests();
     invitations.value = response.data.length;
+    store.removeStateFromLocalStorage()
+
 
   } catch (error) {
     console.log(error);
@@ -425,6 +429,7 @@ async function addTable() {
 
     newTable.value.tableNumber = ''
     newTable.value.placesCount = ''
+    store.removeStateFromLocalStorage()
 
     resetAllErrors()
   } catch (err) {
@@ -448,6 +453,7 @@ async function deleteTable(table){
         tablesCount.value--
       }
     })
+    store.removeStateFromLocalStorage()
   }
   catch (error) {
     console.log(error)

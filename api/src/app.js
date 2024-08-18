@@ -109,6 +109,38 @@ app.get('/api/guests', authenticateToken, async (req, res) => {
     }
 })
 
+app.post('/api/tables/save', authenticateToken, async (req, res) => {
+    try {
+        const tables = req.body.tables;
+        await prisma.guest.updateMany({
+            where: {
+                table_id: {
+                    not: null
+                },
+                user_id: req.user.id
+            },
+            data: {
+                table_id: null
+            }
+        });
+
+        for (let table of tables) {
+            for (let guest of table.guests) {
+                await prisma.guest.update({
+                    where: { id: guest.id },
+                    data: { table_id: table.table.id }
+                });
+            }
+        }
+
+        res.status(200).send('Seating arrangement saved successfully.');
+    } catch (error) {
+        console.log('Error saving seating arrangement:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
 app.put('/api/guests/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
@@ -191,11 +223,13 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
                 count: true,
                 name: true,
                 id: true,
+                table_id: true // נבדוק אם האורח כבר שובץ לשולחן
             },
             where: {
                 user_id: req.user.id
             },
         });
+
         const groupedGuests = guestsByUser.reduce((acc, guest) => {
             const key = `${guest.side}-${guest.closeness}`;
             acc[key] = acc[key] || { side: guest.side, closeness: guest.closeness, guestsCount: 0, guests: [] };
@@ -203,8 +237,6 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
             acc[key].guests.push(guest);
             return acc;
         }, {});
-        // console.log('guestbyuser: ',guestsByUser);
-        // console.log('groupedGuests: ', groupedGuests);
 
         let sortedGuests = Object.values(groupedGuests).sort((a, b) => b.guestsCount - a.guestsCount);
 
@@ -216,40 +248,39 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
                 places_count: 'desc'
             }
         });
-        const list = []
-        let [tableIndex, guestIndex] = [0, 0]
-        let totalPlacesCount = 0
-        tables.forEach((table) => {
-            totalPlacesCount += table.places_count
-        })
 
-        let totalGuests = 0
+        const list = [];
+        let [tableIndex, guestIndex] = [0, 0];
+        let totalPlacesCount = 0;
+        tables.forEach((table) => {
+            totalPlacesCount += table.places_count;
+        });
+
+        let totalGuests = 0;
         guestsByUser.forEach((guest) => {
-            totalGuests += guest.count
-        })
+            totalGuests += guest.count;
+        });
         if (totalGuests > totalPlacesCount) {
-            return res.status(422).send({error: "The guests number is smaller than chairs number"})
+            return res.status(422).send({error: "The guests number is smaller than chairs number"});
         }
+
+        // נשלב את השינויים הידניים עם האורחים החדשים
         while(tableIndex < tables.length && sortedGuests.length > guestIndex ) {
             if(tables[tableIndex]['places_count'] >= sortedGuests[guestIndex].guestsCount) {
                 list.push({
                     table: tables[tableIndex],
                     guests: sortedGuests[guestIndex].guests,
                     guestsCount: sortedGuests[guestIndex].guestsCount
-                })
+                });
+
                 sortedGuests[guestIndex].guests.forEach(async (guest) => {
                     await prisma.guest.update({
-                        where: {
-                            id: guest.id,
-                        },
-                        data: {
-                            'table_id': tables[tableIndex].id,
-                        },
-                    })
-                })
-                sortedGuests.shift()
-            }
-            else {
+                        where: { id: guest.id },
+                        data: { 'table_id': tables[tableIndex].id },
+                    });
+                });
+                sortedGuests.shift();
+            } else {
                 function maxGuestCount(number, counts) {
                     let max = 0;
                     let bestSubset = [];
@@ -271,7 +302,6 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
 
                     backtrack(0, [], 0);
 
-                    // Create the remaining array by filtering out the counts in the best subset
                     let remaining = counts.filter(weight => !bestSubset.includes(weight));
 
                     return {
@@ -281,45 +311,42 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
                     };
                 }
 
-                const { max, maxSubset, remainingCounts } = maxGuestCount(tables[tableIndex]['places_count'], sortedGuests[guestIndex].guests)
+                const { max, maxSubset, remainingCounts } = maxGuestCount(tables[tableIndex]['places_count'], sortedGuests[guestIndex].guests);
 
                 list.push({
                     table: tables[tableIndex],
                     guests: maxSubset,
                     guestsCount: max
-                })
+                });
 
                 maxSubset.forEach(async (guest) => {
                     await prisma.guest.update({
-                        where: {
-                            id: guest.id,
-                        },
-                        data: {
-                            'table_id': tables[tableIndex].id,
-                        },
-                    })
-                })
+                        where: { id: guest.id },
+                        data: { 'table_id': tables[tableIndex].id },
+                    });
+                });
 
                 sortedGuests.push({
                     side: remainingCounts[0].side,
                     closeness: remainingCounts[0].closeness,
                     guestsCount: sortedGuests[guestIndex].guestsCount - max,
                     guests: remainingCounts
-                })
-                sortedGuests.shift()
+                });
+                sortedGuests.shift();
 
                 sortedGuests = Object.values(sortedGuests).sort((a, b) => b.guestsCount - a.guestsCount);
             }
 
-            tableIndex++
+            tableIndex++;
         }
 
         res.status(201).json(list);
     } catch (error) {
-        console.log('error', error)
+        console.log('error', error);
         res.status(500).json({ error: 'Internal server error' });
     }
-})
+});
+
 
 
 app.delete('/api/tables/:tableNumber', authenticateToken, async (req, res) => {
