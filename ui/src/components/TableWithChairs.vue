@@ -1,25 +1,19 @@
 <template>
-  <div class="table-container">
-    <div class="flex flex-wrap justify-center items-center h-full gap-x-2 text-4xl">
-      <tooltip>
-        <template #content><div>[{{tableNumber}}] </div></template>
-        <template #text>
-          <div class="flex gap-2 flex-col">
-            <div v-for="(person, peopleIndex) in people" :key="`person_${peopleIndex}`"
-                 class="whitespace-nowrap text-xs border border-primary-color bg-primary-color text-gray-300 rounded-xl px-2 py-1">
-              ({{ person.count }}) {{ person.name }}
-            </div>
-          </div>
-        </template>
-      </tooltip>
+  <div class="table-container border-purple-300">
+    <div class="flex flex-wrap justify-center items-center h-full gap-x-2 text-4xl ">
+      <div>[{{tableNumber}}]</div>
+      <div class="flex gap-2 flex-col">
+        <div v-for="(person, peopleIndex) in people" :key="`person_${peopleIndex}`"
+             class="whitespace-nowrap text-xs border border-primary-color bg-primary-color text-gray-300 rounded-xl px-2 py-1">
+          ({{ person.count }}) {{ person.name }}
+        </div>
+      </div>
     </div>
     <div class="chair" :class="index < guestsCount ? 'active' : 'no-active'" v-for="(chair, index) in chairs" :key="`chair_${index}`" :style="getChairStyle(index)" />
   </div>
 </template>
 
-
 <script setup>
-import Tooltip from "@/components/Tooltip.vue";
 const props = defineProps({
   guestsCount: {
     type: Number,
@@ -57,12 +51,12 @@ function getChairStyle(index) {
 </script>
 
 <style scoped>
+
 .table-container {
   position: relative;
   width: 210px;
   height: 210px;
-
-  @apply bg-gray-200 rounded-full border-2 border-gray-700;
+  @apply bg-gray-200 rounded-full border-2 border-purple-300;
 }
 .chair {
   position: absolute;
