@@ -74,11 +74,4 @@ async function generateExcel() {
 </script>
 
 <style scoped>
-.btn-download-excel {
-  background-color: var(--primary-color) !important;
-  color: white !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  transition: none !important;
-}
 </style>
