@@ -22,15 +22,12 @@
           :class="typeof col === 'object' ? 'hidden' : ''"
           class="text-center text-lg whitespace-nowrap px-3 py-5 font-semibold"
       >
-        <div v-if="editIndex === rowIndex">
-          <!-- לא ניתן לערוך את side וה-closeness -->
           <input
-              v-if="colIndex !== 2 && colIndex !== 3"
-              v-model="editableContent[colIndex]"
+              v-if="colIndex !== 2 && colIndex !== 3 && editIndex === rowIndex"
+              v-model="editableContent[adjustmentTitles(titles[colIndex])]"
               class="input w-full"
+              :type="adjustmentTitles(titles[colIndex])==='name' ? 'text' : 'number'"
           />
-          <span v-else>{{ col }}</span>
-        </div>
         <div v-else class="text-gray-900">
           {{ col }}
         </div>
@@ -45,6 +42,9 @@
         <button @click="$emit('delete', content)">
           <img src="../assets/images/delete.jpg" alt="Delete" class="w-6 h-6" />
         </button>
+<!--        <button @click="$emit('edit', content)">-->
+<!--          <img src="../assets/images/edit.jpg" alt="Edit" class="w-6 h-6" />-->
+<!--        </button>-->
       </td>
     </tr>
     </tbody>
@@ -68,17 +68,26 @@ const props = defineProps({
 defineEmits(['edit', 'delete']);
 
 const editIndex = ref(null);
-const editableContent = ref([]);
+const editableContent = ref({
+  name: '',
+  guestCount: 0
+});
 const store = useStore();
+
+function adjustmentTitles(str){
+  const string = str.split(' ').join('')
+  return string.charAt(0).toLowerCase() + string.slice(1)
+}
 
 const startEdit = (index, content) => {
   editIndex.value = index;
-  editableContent.value = [...content];
-  console.log("editableContent", editableContent)
+  editableContent.value.name  =  content[0],
+  editableContent.value.guestCount  =  content[1].toString()
+  console.log("content[1]", content[1])
 };
 
 const saveEdit = async (index) => {
-  const updatedContent = [...editableContent.value];
+  const updatedContent = editableContent.value;
 
   console.log('All contents:', props.contents);
   console.log('Content at index:', props.contents[index]);
@@ -91,18 +100,19 @@ const saveEdit = async (index) => {
     return;
   }
 
-  if (typeof updatedContent[1] === 'string') {
-    updatedContent[1] = parseInt(updatedContent[1], 10);
+  if (typeof updatedContent.guestCount === 'string') {
+    updatedContent.guestCount = parseInt(updatedContent.guestCount, 10);
   }
 
-  if (isNaN(updatedContent[1])) {
+  if (isNaN(updatedContent.guestCount)) {
     console.error('Count value is not a valid number');
     return;
   }
 
   try {
-    await store.updateGuest(guestId, updatedContent);
-    props.contents[index] = updatedContent;
+   await store.updateGuest(guestId, updatedContent);
+    props.contents[index][0] = updatedContent.name;
+    props.contents[index][1] = updatedContent.guestCount;
   } catch (error) {
     console.error('Failed to save the changes:', error);
   }

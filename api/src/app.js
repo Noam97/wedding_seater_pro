@@ -144,14 +144,13 @@ app.post('/api/tables/save', authenticateToken, async (req, res) => {
 app.put('/api/guests/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
-        const updatedData = req.body;
+        const {name, guestCount} = req.body;
 
-        const dataToUpdate = {
-            name: updatedData[0],
-            count: updatedData[1],
-            side: updatedData[2],
-            closeness: updatedData[3],
-        };
+        const dataToUpdate = {}
+        if (name!==null)
+            dataToUpdate.name = name
+        if (guestCount!==null)
+            dataToUpdate.count = parseInt(guestCount)
 
         const updatedGuest = await prisma.guest.update({
             where: { id: parseInt(id) },
@@ -177,14 +176,12 @@ app.post('/api/tables', authenticateToken, async (req, res) => {
             where: {
                 table_number: tableNumber,
                 user_id: req.user.id
-
             },
         })
         console.log(tableDoesExist)
         if (tableDoesExist.length)
             return res.status(422).send({ error: 'The number table already exist'})
 
-        // Create a new guest into the database
         const newTable = await prisma.table.create({
             data: {
                 table_number: parseInt(tableNumber),
@@ -192,7 +189,6 @@ app.post('/api/tables', authenticateToken, async (req, res) => {
                 user_id: req.user.id
             },
         });
-       // console.log("table: " + newTable)
 
         res.status(201).json(newTable);
     } catch (error) {
@@ -264,7 +260,6 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
             return res.status(422).send({error: "The guests number is smaller than chairs number"});
         }
 
-        // נשלב את השינויים הידניים עם האורחים החדשים
         while(tableIndex < tables.length && sortedGuests.length > guestIndex ) {
             if(tables[tableIndex]['places_count'] >= sortedGuests[guestIndex].guestsCount) {
                 list.push({

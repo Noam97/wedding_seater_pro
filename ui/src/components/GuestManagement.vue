@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen flex flex-col gap-6 items-center p-10">
-    <h1 class="text-4xl text-primary-color uppercase">
-      Guest Management
+    <h1 class="text-4xl text-primary-color ">
+      Guest & Table Management
     </h1>
 
     <Card :bride-count="countFromBride" :groom-count="countFromGroom" :invitations="invitations" :tables-count="tablesCount" :chairs-count="chairsCount" />
@@ -240,7 +240,7 @@ const closenessList = ref([
   }
 ])
 
-const guestsTableTitles = ref(['Name', "Guest's count", 'Side', 'Closeness', 'Actions'])
+const guestsTableTitles = ref(['Name', "Guest Count", 'Side', 'Closeness', 'Actions'])
 const guestsTableContents = ref([])
 const error = ref('')
 const guest_rules = {
@@ -255,7 +255,7 @@ const guest_rules = {
   side: { required },
   closeness: { required },
 }
-const tablesTableTitles = ref(['Table Number', 'Guest count', 'Actions'])
+const tablesTableTitles = ref(['Table Number', 'Guest Count', 'Actions'])
 const tablesTableContents = ref([])
 const table_rules = {
   tableNumber: { required },
