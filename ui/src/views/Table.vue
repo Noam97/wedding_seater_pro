@@ -15,7 +15,8 @@
     </div>
     <div v-else class="text-center absolute top-16">
       <h1 class="text-4xl text-primary-color uppercase mb-8">SEATING ARRANGEMENT</h1>
-      <div class="flex justify-around items-center gap-16 border border-purple-300 rounded-xl shadow-md px-6 py-2 w-full" style="margin-bottom: 0;">
+      <div
+          class="flex justify-around items-center gap-16 border border-purple-300 rounded-xl shadow-md px-6 py-2 w-full" style="margin-bottom: 0;">
         <div class="flex justify-center gap-20">
           <button
               @click="saveState"
@@ -124,9 +125,12 @@ init();
 
 .tables-container {
   display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
   justify-content: center;
   align-items: flex-start;
   flex-direction: row;
+  padding-top: 100px;
 }
 
 .table-with-chairs {
@@ -159,13 +163,10 @@ init();
 }
 
 .tables-container {
-  margin-top: -200px;
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
   justify-content: center;
-  align-items: flex-start;
-  flex-direction: row;
 }
 
 .guest-list {
@@ -203,5 +204,4 @@ init();
   top: 0;
   left: 0;
 }
-
 </style>
