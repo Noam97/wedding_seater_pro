@@ -164,8 +164,6 @@ app.put('/api/guests/:id', authenticateToken, async (req, res) => {
     }
 });
 
-
-
 app.post('/api/tables', authenticateToken, async (req, res) => {
     try {
         const { tableNumber, placesCount } = req.body
@@ -219,7 +217,7 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
                 count: true,
                 name: true,
                 id: true,
-                table_id: true // נבדוק אם האורח כבר שובץ לשולחן
+                table_id: true
             },
             where: {
                 user_id: req.user.id
@@ -261,78 +259,78 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
         }
 
         while(tableIndex < tables.length && sortedGuests.length > guestIndex ) {
-            if(tables[tableIndex]['places_count'] >= sortedGuests[guestIndex].guestsCount) {
+            let currentTable = tables[tableIndex];
+            let currentGuestsGroup = sortedGuests[guestIndex];
+
+            let remainingSeats = currentTable.places_count - list.filter(l => l.table.id === currentTable.id).reduce((acc, l) => acc + l.guestsCount, 0);
+
+            if(remainingSeats >= currentGuestsGroup.guestsCount) {
                 list.push({
-                    table: tables[tableIndex],
-                    guests: sortedGuests[guestIndex].guests,
-                    guestsCount: sortedGuests[guestIndex].guestsCount
+                    table: currentTable,
+                    guests: currentGuestsGroup.guests,
+                    guestsCount: currentGuestsGroup.guestsCount
                 });
 
-                sortedGuests[guestIndex].guests.forEach(async (guest) => {
+                currentGuestsGroup.guests.forEach(async (guest) => {
                     await prisma.guest.update({
                         where: { id: guest.id },
-                        data: { 'table_id': tables[tableIndex].id },
+                        data: { 'table_id': currentTable.id },
                     });
                 });
                 sortedGuests.shift();
-            } else {
-                function maxGuestCount(number, counts) {
-                    let max = 0;
-                    let bestSubset = [];
-
-                    function backtrack(start, currentSubset, currentCount) {
-                        if (currentCount <= number && currentCount > max) {
-                            max = currentCount;
-                            bestSubset = [...currentSubset];
-                        }
-
-                        for (let i = start; i < counts.length; i++) {
-                            if (currentCount + counts[i].count <= number) {
-                                currentSubset.push(counts[i]);
-                                backtrack(i + 1, currentSubset, currentCount + counts[i].count);
-                                currentSubset.pop();
-                            }
-                        }
-                    }
-
-                    backtrack(0, [], 0);
-
-                    let remaining = counts.filter(weight => !bestSubset.includes(weight));
-
-                    return {
-                        max: max,
-                        maxSubset: bestSubset,
-                        remainingCounts: remaining
-                    };
-                }
-
-                const { max, maxSubset, remainingCounts } = maxGuestCount(tables[tableIndex]['places_count'], sortedGuests[guestIndex].guests);
-
+            } else if (remainingSeats > 0) {
+                // אם יש יותר מוזמנים מאשר מקומות פנויים, נחלק את הקבוצה
+                let guestsToSeat = currentGuestsGroup.guests.splice(0, remainingSeats);
                 list.push({
-                    table: tables[tableIndex],
-                    guests: maxSubset,
-                    guestsCount: max
+                    table: currentTable,
+                    guests: guestsToSeat,
+                    guestsCount: guestsToSeat.reduce((acc, g) => acc + g.count, 0)
                 });
 
-                maxSubset.forEach(async (guest) => {
+                guestsToSeat.forEach(async (guest) => {
                     await prisma.guest.update({
                         where: { id: guest.id },
-                        data: { 'table_id': tables[tableIndex].id },
+                        data: { 'table_id': currentTable.id },
                     });
                 });
 
-                sortedGuests.push({
-                    side: remainingCounts[0].side,
-                    closeness: remainingCounts[0].closeness,
-                    guestsCount: sortedGuests[guestIndex].guestsCount - max,
-                    guests: remainingCounts
-                });
-                sortedGuests.shift();
-
+                // נשמור את השאר להמשך שיבוץ
                 sortedGuests = Object.values(sortedGuests).sort((a, b) => b.guestsCount - a.guestsCount);
             }
 
             tableIndex++;
+        }
+
+        // Final pass to ensure all guests are seated
+        for (let i = 0; i < sortedGuests.length; i++) {
+            let remainingGuests = sortedGuests[i].guests;
+            for (let j = 0; j < tables.length; j++) {
+                if (remainingGuests.length === 0) break;
+                let currentTable = tables[j];
+                let availableSeats = currentTable.places_count - list.filter(l => l.table.id === currentTable.id).reduce((acc, l) => acc + l.guestsCount, 0);
+
+                if (availableSeats > 0) {
+                    let guestsToSeat = remainingGuests.splice(0, availableSeats);
+                    guestsToSeat.forEach(async (guest) => {
+                        await prisma.guest.update({
+                            where: { id: guest.id },
+                            data: { 'table_id': currentTable.id },
+                        });
+                    });
+
+                    let tableEntry = list.find(l => l.table.id === currentTable.id);
+                    if (tableEntry) {
+                        tableEntry.guests.push(...guestsToSeat);
+                        tableEntry.guestsCount += guestsToSeat.reduce((acc, g) => acc + g.count, 0);
+                    } else {
+                        list.push({
+                            table: currentTable,
+                            guests: guestsToSeat,
+                            guestsCount: guestsToSeat.reduce((acc, g) => acc + g.count, 0)
+                        });
+                    }
+                }
+            }
         }
 
         res.status(201).json(list);
