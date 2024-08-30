@@ -300,7 +300,7 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
                 });
                 sortedGuests.shift();
             } else if (remainingSeats > 0) {
-                // אם יש יותר מוזמנים מאשר מקומות פנויים, נחלק את הקבוצה
+                // If there are more guests than available seats, split the group
                 let guestsToSeat = currentGuestsGroup.guests.splice(0, remainingSeats);
                 list.push({
                     table: currentTable,
@@ -315,7 +315,7 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
                     });
                 });
 
-                // נשמור את השאר להמשך שיבוץ
+                // Keep the remaining guests for further seating
                 sortedGuests = Object.values(sortedGuests).sort((a, b) => b.guestsCount - a.guestsCount);
             }
 
