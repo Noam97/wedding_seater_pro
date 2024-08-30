@@ -20,16 +20,15 @@
         @add="onGuestAdded"
         @remove="onGuestRemoved"
     >
-      <template #item="{ element, index }">
+      <template #item="{ element }">
         <div class="guest-item">
           {{ element.name }} ({{ element.count }})
           <i class="fas fa-arrows-alt"></i>
         </div>
       </template>
     </draggable>
-
     <div
-        v-for="(chair, index) in chairs"
+        v-for="(chair, index) in allChairs"
         :key="`chair_${index}`"
         :class="getChairClass(index)"
         :style="getChairStyle(index)"
@@ -39,7 +38,7 @@
 
 <script setup>
 import draggable from 'vuedraggable';
-import { computed, defineProps, ref, nextTick } from 'vue';
+import { defineProps, defineEmits, ref, nextTick, watch } from 'vue';
 
 const props = defineProps({
   tableData: Object,
@@ -58,59 +57,62 @@ const props = defineProps({
   },
 });
 
-const people = ref([...props.people]); // Local definition of people
-const originalPeople = ref([...props.people]); // To store the original state of the people
-const showErrorModal = ref(false); // State to control error modal visibility
-const totalGuests = ref(calculateTotalGuests()); // Use a ref to store totalGuests count
+const emit = defineEmits(['update:people']);
 
-// Function to calculate total guests
-function calculateTotalGuests() {
-  return people.value.reduce((total, guest) => total + guest.count, 0);
-}
+const people = ref([...props.people]);
+const allChairs = ref(props.chairs);
+const totalGuests = ref(calculateTotalGuests(people.value));
+const originalPeople = ref([...props.people]);
+const originalTotalGuests = ref(calculateTotalGuests(props.people));
+const showErrorModal = ref(false);
+const actionInProgress = ref(false);
 
-// Update totalGuests only if there is no error
-function updateGuestCounts() {
-  if (!showErrorModal.value) {
-    totalGuests.value = calculateTotalGuests();
-  }
+function calculateTotalGuests(peopleArray) {
+  return peopleArray.reduce((total, guest) => total + guest.count, 0);
 }
 
 function closeErrorModal() {
   showErrorModal.value = false;
-  updateGuestCounts(); // Recalculate total guests when error is resolved
+}
+
+
+function resetState() {
+  people.value = [...originalPeople.value]; // שחזור הרשימה למצב המקורי
+  totalGuests.value = originalTotalGuests.value; // שחזור הטוטאל המקורי
+  actionInProgress.value = false;
 }
 
 function onDragStart() {
-  originalPeople.value = [...people.value]; // Save the original state of the table
+  originalPeople.value = [...people.value]; // שמירת המצב הראשוני של השולחן
+  originalTotalGuests.value = totalGuests.value; // שמירת מספר האורחים הכולל המקורי
+  actionInProgress.value = true; // סימון שהגרירה התחילה
+  console.log("Drag started, original state and total saved");
 }
 
 function onDragEnd() {
-  // This function remains empty to prevent conflicts with add and remove events
+  console.log("Drag ended");
+  actionInProgress.value = false; // איפוס מצב פעולה לאחר סיום
 }
 
-function onGuestAdded(event) {
-  if (calculateTotalGuests() > props.chairs) {
+async function onGuestAdded(event) {
+  await nextTick();
+  const newTotalGuests = calculateTotalGuests(people.value);
+  console.log('CHAIRS', props.chairs);
+  if (newTotalGuests > props.chairs) {
     showErrorModal.value = true;
-    nextTick(() => {
-      // Remove the added guest if the number of guests exceeds the available chairs
+    await nextTick(() => {
       event.from.insertBefore(event.item, event.from.children[event.oldIndex]);
-      people.value = [...originalPeople.value]; // Restore the original state of the table if there is an overflow
+      resetState();
     });
   } else {
-    // Update guest counts if there is no overflow
-    updateGuestCounts();
+    totalGuests.value = newTotalGuests;
+    emit('update:people', people.value);
   }
 }
 
-function onGuestRemoved(event) {
-  if (calculateTotalGuests() > props.chairs) {
-    nextTick(() => {
-      people.value = [...originalPeople.value]; // Restore the original state if there is an overflow
-    });
-  } else {
-    // Update guest counts if there is no overflow
-    updateGuestCounts();
-  }
+function onGuestRemoved() {
+  totalGuests.value = calculateTotalGuests(people.value);
+  emit('update:people', people.value);
 }
 
 function getChairStyle(index) {
@@ -129,8 +131,16 @@ function getChairStyle(index) {
 function getChairClass(index) {
   return index < totalGuests.value ? 'chair active' : 'chair no-active';
 }
-</script>
 
+watch(
+    () => props.people,
+    (newPeople) => {
+      people.value = [...newPeople];
+      totalGuests.value = calculateTotalGuests(newPeople);
+    },
+    { deep: true, immediate: true }
+);
+</script>
 
 <style scoped>
 .table-with-chairs {
@@ -215,6 +225,9 @@ function getChairClass(index) {
   border-radius: 8px;
   width: 80%;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .chair {

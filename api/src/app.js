@@ -140,6 +140,27 @@ app.post('/api/tables/save', authenticateToken, async (req, res) => {
     }
 });
 
+app.put('/api/tables/:id', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {guestCount} = req.body;
+
+        const dataToUpdate = {}
+        if (guestCount!==null)
+            dataToUpdate.places_count = parseInt(guestCount)
+
+        const updatedGuest = await prisma.table.update({
+            where: { id: parseInt(id) },
+            data: dataToUpdate,
+        });
+
+        res.status(200).json(updatedGuest);
+    } catch (error) {
+        console.log('Error during guest update:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 
 app.put('/api/guests/:id', authenticateToken, async (req, res) => {
     try {

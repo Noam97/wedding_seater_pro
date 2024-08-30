@@ -46,9 +46,10 @@
             :key="index"
             :table-data="tableData"
             :chairs="tableData.table.places_count"
-        :people="tableData.guests"
-        :table-number="tableData.table.table_number"
-        :guests-count="tableData.guests.length"
+            :people="tableData.guests"
+            :table-number="tableData.table.table_number"
+            :guests-count="tableData.guests.length"
+            @update:people="updateTableGuests(tableData.table.id, $event)"
         ></table-with-chairs>
       </div>
     </div>
@@ -64,9 +65,8 @@ import { useRouter } from "vue-router";
 
 const store = useStore();
 const router = useRouter();
-let results = ref([]);
-let errGenerate = ref("");
-
+const results = ref([]);
+const errGenerate = ref("");
 async function init() {
   try {
     const savedResults = localStorage.getItem('seatingArrangement');
@@ -95,6 +95,16 @@ const excelData = computed(() => {
   data.sort((a, b) => a[0] - b[0]);
   return data;
 });
+
+async function updateTableGuests(tableId, updatedGuests) {
+  const table = results.value.find(t => t.table.id === tableId);
+  if (table) {
+    console.log('Updating table with ID:', tableId, 'with updated guests:', updatedGuests);
+    table.guests = updatedGuests;
+  } else {
+    console.error('Table not found with ID:', tableId);
+  }
+};
 
 function saveState() {
   localStorage.setItem('seatingArrangement', JSON.stringify(results.value));

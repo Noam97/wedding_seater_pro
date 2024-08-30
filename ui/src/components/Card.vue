@@ -20,10 +20,10 @@
           </span>
         </div>
         <div class="flex flex-col">
-          <span class="text-xl">
+          <span class="text">
             bride's side
           </span>
-          <span class="text-xl">
+          <span class="text">
             groom's side
           </span>
         </div>

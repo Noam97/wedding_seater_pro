@@ -188,9 +188,9 @@
 
     <div class="w-3/4">
       <matrix-table v-if="openTableCard" :titles="tablesTableTitles" :contents="tablesTableContents" @edit="editTable"
-                    @delete="deleteTable"  />
+                    @delete="deleteTable"  @update-data="handleUpdateData" :editMode='editMode'/>
       <matrix-table v-else :titles="guestsTableTitles" :contents="guestsTableContents" @edit="editGuest"
-                    @delete="deleteGuest" />
+                    @delete="deleteGuest" @update-data="handleUpdateData" :editMode="editMode"/>
     </div>
 
   </div>
@@ -217,6 +217,7 @@ const newTable = ref({
   tableNumber: '',
   placesCount: '',
 })
+const editMode = ref('guests');
 const closenessList = ref([
   {
     value: 'close_family',
@@ -239,6 +240,10 @@ const closenessList = ref([
     name: "Other"
   }
 ])
+
+const setEditMode = (mode) => {
+  editMode.value = mode;
+};
 
 const guestsTableTitles = ref(['Name', "Guest Count", 'Side', 'Closeness', 'Actions'])
 const guestsTableContents = ref([])
@@ -320,7 +325,9 @@ async function addGuest() {
 async function getGuests() {
   try {
     const response = await store.getGuests()
-
+    countFromBride.value = 0
+    countFromGroom.value = 0
+    guestsTableContents.value = []
     response.data.forEach(item => {
       let closenessName = ''
       closenessList.value.forEach(closeness => {
@@ -379,12 +386,24 @@ async function deleteGuest(guest) {
   }
 }
 
+function handleUpdateData(updatedData) {
+  console.log('update-data', updatedData)
+  if (updatedData === 'guests'){
+    getGuests()
+  } else {
+    getTables()
+  }
+}
+
 async function getTables() {
   try {
     const response = await store.getTables()
     let totalChairs = 0;
+    tablesCount.value = 0
+    chairsCount.value = 0
+    tablesTableContents.value = []
     response.data.forEach((item) => {
-      tablesTableContents.value.push([item.table_number, item.places_count])
+      tablesTableContents.value.push([item.table_number, item.places_count,{id: item.id}])
       totalChairs += parseInt(item.places_count)
     })
     tablesCount.value = response.data.length
@@ -398,7 +417,7 @@ function openGuest() {
   resetAllErrors()
   openTableCard.value = false
   openGuestCard.value = !openGuestCard.value
-
+  setEditMode('guests')
   newGuest.value.closeness = ''
   newGuest.value.name = ''
   newGuest.value.guestsCount = ''
@@ -408,6 +427,7 @@ function openTable() {
   resetAllErrors()
   openGuestCard.value = false
   openTableCard.value = !openTableCard.value
+  setEditMode('tables')
 
   newTable.value.placesCount = ''
   newTable.value.name = ''

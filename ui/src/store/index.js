@@ -32,13 +32,17 @@ export const useStore = defineStore('store', () => {
     async function updateGuest(id, payload) {
         return await axiosInstance.put(`/guests/${id}`, payload)
     }
-
     async function createTable(payload) {
         return await axiosInstance.post('/tables', payload)
     }
 
     async function getTables() {
         return await axiosInstance.get('/tables')
+    }
+
+
+    async function updateTable(id, payload) {
+        return await axiosInstance.put(`/tables/${id}`, payload)
     }
 
     async function deleteTable(tableNumber) {
@@ -49,14 +53,14 @@ export const useStore = defineStore('store', () => {
         return await axiosInstance.post('/tables/generate')
     }
 
-     function saveUserInLocalStorage(newToken) {
+    function saveUserInLocalStorage(newToken) {
         token.value = newToken
         localStorage.setItem('token', JSON.stringify(token.value))
     }
 
-     function saveStateInLocalStorage(result){
-         localStorage.setItem('seatingArrangement', JSON.stringify(result));
-     }
+    function saveStateInLocalStorage(result){
+        localStorage.setItem('seatingArrangement', JSON.stringify(result));
+    }
 
     async function saveSeatingArrangement(tables) {
         return await axiosInstance.post('/tables/save', { tables });
@@ -79,6 +83,7 @@ export const useStore = defineStore('store', () => {
         deleteGuest,
         updateGuest,
         createTable,
+        updateTable,
         deleteTable,
         getTables,
         saveStateInLocalStorage,
