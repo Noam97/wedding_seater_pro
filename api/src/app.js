@@ -140,27 +140,6 @@ app.post('/api/tables/save', authenticateToken, async (req, res) => {
     }
 });
 
-app.put('/api/tables/:id', authenticateToken, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const {guestCount} = req.body;
-
-        const dataToUpdate = {}
-        if (guestCount!==null)
-            dataToUpdate.places_count = parseInt(guestCount)
-
-        const updatedGuest = await prisma.table.update({
-            where: { id: parseInt(id) },
-            data: dataToUpdate,
-        });
-
-        res.status(200).json(updatedGuest);
-    } catch (error) {
-        console.log('Error during guest update:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
 
 app.put('/api/guests/:id', authenticateToken, async (req, res) => {
     try {
@@ -181,6 +160,27 @@ app.put('/api/guests/:id', authenticateToken, async (req, res) => {
         res.status(200).json(updatedGuest);
     } catch (error) {
         console.log('Error during guest update:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+app.put('/api/tables/:id', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {guestCount} = req.body;
+
+        console.log("id", id)
+        console.log("guestCount", guestCount)
+        const dataToUpdate = {}
+        if (guestCount!==null)
+            dataToUpdate.places_count = parseInt(guestCount)
+
+        const updatedGuest = await prisma.table.update({
+            where: { id: parseInt(id) },
+            data: dataToUpdate,
+        });
+        res.status(200).json(updatedGuest);
+    } catch (error) {
+        console.log('Error during table update:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -245,147 +245,110 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
             },
         });
 
+        // Group guests by side and closeness
         const groupedGuests = guestsByUser.reduce((acc, guest) => {
             const key = `${guest.side}-${guest.closeness}`;
-            acc[key] = acc[key] || { side: guest.side, closeness: guest.closeness, guestsCount: 0, guests: [] };
+            if (!acc[key]) {
+                acc[key] = { side: guest.side, closeness: guest.closeness, guestsCount: 0, guests: [] };
+            }
             acc[key].guestsCount += guest.count;
             acc[key].guests.push(guest);
             return acc;
         }, {});
 
+        // Sort groups by number of guests (largest first)
         let sortedGuests = Object.values(groupedGuests).sort((a, b) => b.guestsCount - a.guestsCount);
 
+        // Retrieve the tables
         const tables = await prisma.table.findMany({
-            where: {
-                user_id: req.user.id
-            },
-            orderBy: {
-                places_count: 'desc'
-            }
+            where: { user_id: req.user.id },
+            orderBy: { places_count: 'desc' }
         });
 
-        const list = [];
-        let [tableIndex, guestIndex] = [0, 0];
-        let totalPlacesCount = 0;
-        tables.forEach((table) => {
-            totalPlacesCount += table.places_count;
-        });
+        const seatingPlan = {};
 
-        let totalGuests = 0;
-        guestsByUser.forEach((guest) => {
-            totalGuests += guest.count;
-        });
-        if (totalGuests > totalPlacesCount) {
-            return res.status(422).send({error: "The guests number is smaller than chairs number"});
-        }
+        for (let table of tables) {
+            seatingPlan[table.id] = {
+                table: table,
+                guests: [],
+            };
+            console.log('table id: ', table.id);
 
-        while(tableIndex < tables.length && sortedGuests.length > guestIndex ) {
-            let currentTable = tables[tableIndex];
-            let currentGuestsGroup = sortedGuests[guestIndex];
+            let remainingSeats = table.places_count;
+            console.log(remainingSeats, 'remainingSeats');
+            console.log(sortedGuests.length, 'sortedGuests.length');
+            while (remainingSeats > 0 && sortedGuests.length > 0) {
+                let currentGroup = sortedGuests[0];
 
-            let remainingSeats = currentTable.places_count - list.filter(l => l.table.id === currentTable.id).reduce((acc, l) => acc + l.guestsCount, 0);
+                if (remainingSeats >= currentGroup.guestsCount) {
+                    console.log('if currentGroup.guestsCount', currentGroup.guestsCount );
+                    // Seat the entire group at this table
+                    seatingPlan[table.id].guests.push(...currentGroup.guests);
 
-            if(remainingSeats >= currentGuestsGroup.guestsCount) {
-                list.push({
-                    table: currentTable,
-                    guests: currentGuestsGroup.guests,
-                    guestsCount: currentGuestsGroup.guestsCount
-                });
-
-                currentGuestsGroup.guests.forEach(async (guest) => {
-                    await prisma.guest.update({
-                        where: { id: guest.id },
-                        data: { 'table_id': currentTable.id },
-                    });
-                });
-                sortedGuests.shift();
-            } else if (remainingSeats > 0) {
-                // If there are more guests than available seats, split the group
-                let guestsToSeat = currentGuestsGroup.guests.splice(0, remainingSeats);
-                list.push({
-                    table: currentTable,
-                    guests: guestsToSeat,
-                    guestsCount: guestsToSeat.reduce((acc, g) => acc + g.count, 0)
-                });
-
-                guestsToSeat.forEach(async (guest) => {
-                    await prisma.guest.update({
-                        where: { id: guest.id },
-                        data: { 'table_id': currentTable.id },
-                    });
-                });
-
-                // Keep the remaining guests for further seating
-                sortedGuests = Object.values(sortedGuests).sort((a, b) => b.guestsCount - a.guestsCount);
-            }
-
-            tableIndex++;
-        }
-
-        // Final pass to ensure all guests are seated
-        for (let i = 0; i < sortedGuests.length; i++) {
-            let remainingGuests = sortedGuests[i].guests;
-            for (let j = 0; j < tables.length; j++) {
-                if (remainingGuests.length === 0) break;
-                let currentTable = tables[j];
-                let availableSeats = currentTable.places_count - list.filter(l => l.table.id === currentTable.id).reduce((acc, l) => acc + l.guestsCount, 0);
-
-                if (availableSeats > 0) {
-                    let guestsToSeat = remainingGuests.splice(0, availableSeats);
-                    guestsToSeat.forEach(async (guest) => {
-                        await prisma.guest.update({
+                    await Promise.all(currentGroup.guests.map(guest =>
+                        prisma.guest.update({
                             where: { id: guest.id },
-                            data: { 'table_id': currentTable.id },
-                        });
-                    });
+                            data: { table_id: table.id }
+                        })
+                    ));
 
-                    let tableEntry = list.find(l => l.table.id === currentTable.id);
-                    if (tableEntry) {
-                        tableEntry.guests.push(...guestsToSeat);
-                        tableEntry.guestsCount += guestsToSeat.reduce((acc, g) => acc + g.count, 0);
+                    // Remove this group as they are fully seated
+                    remainingSeats -= currentGroup.guestsCount;
+                    sortedGuests.shift();
+                } else {
+
+                    console.log('else remainingSeats', remainingSeats );
+
+                    // Find the group that fits in the remaining seats
+                    const index = sortedGuests.findIndex(group => group.guestsCount <= remainingSeats);
+                    if (index !== -1) {
+                        // Remove the group from sortedGuests
+                        const groupThatFits = sortedGuests.splice(index, 1)[0];
+
+                        // Seat the group that fits
+                        seatingPlan[table.id].guests.push(...groupThatFits.guests);
+
+                        await Promise.all(groupThatFits.guests.map(guest =>
+                            prisma.guest.update({
+                                where: { id: guest.id },
+                                data: { table_id: table.id }
+                            })
+                        ));
+
+                        remainingSeats -= groupThatFits.guestsCount;
                     } else {
-                        list.push({
-                            table: currentTable,
-                            guests: guestsToSeat,
-                            guestsCount: guestsToSeat.reduce((acc, g) => acc + g.count, 0)
-                        });
+                        // No group fits in the remaining seats
+                        break;
                     }
+
                 }
             }
         }
 
-        res.status(201).json(list);
+        res.status(201).json(Object.values(seatingPlan));
     } catch (error) {
-        console.log('error', error);
+        console.error('Error generating tables:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
 
-
-app.delete('/api/tables/:tableNumber', authenticateToken, async (req, res) => {
-    try {
-        const {tableNumber} = req.params
-        console.log("userid:" ,req.user.id)
-        await prisma.table.delete({
-            where: {
-                user_id_table_number: {
-                    table_number: parseInt(tableNumber),
-                    user_id: req.user.id
-                }
-            },
-        });
-        res.status(200).json();
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({ error: 'Internal server error' });
-    }
-})
-
 app.delete('/api/guests/:id', authenticateToken, async (req, res) => {
     try {
         const {id} = req.params
         await prisma.guest.delete({
+            where: { id: parseInt(id) },
+        });
+        res.status(200).json();
+    } catch (error) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+})
+
+app.delete('/api/tables/:id', authenticateToken, async (req, res) => {
+    try {
+        const {id} = req.params
+        await prisma.table.delete({
             where: { id: parseInt(id) },
         });
         res.status(200).json();
