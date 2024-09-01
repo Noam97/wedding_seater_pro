@@ -66,6 +66,10 @@ export const useStore = defineStore('store', () => {
         return await axiosInstance.post('/tables/save', { tables });
     }
 
+    async function rearrangeSeatingArrangements() {
+        return await axiosInstance.get('/regenerate-seating');
+    }
+
     function removeStateFromLocalStorage(){
         localStorage.removeItem('seatingArrangement');
     }
@@ -86,6 +90,7 @@ export const useStore = defineStore('store', () => {
         updateTable,
         deleteTable,
         getTables,
+        rearrangeSeatingArrangements,
         saveStateInLocalStorage,
         saveSeatingArrangement,
         removeStateFromLocalStorage,

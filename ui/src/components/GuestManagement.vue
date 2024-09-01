@@ -229,7 +229,7 @@ const closenessList = ref([
     value: 'friends',
     name: 'Friends'
   }, {
-    value: 'co-workers',
+    value: 'co_workers',
     name: 'Co-workers'
   }, {
     value: "parents_guests",
@@ -386,12 +386,13 @@ async function deleteGuest(guest) {
   }
 }
 
-function handleUpdateData(updatedData) {
+async function handleUpdateData(updatedData) {
   console.log('update-data', updatedData)
+  store.removeStateFromLocalStorage()
   if (updatedData === 'guests'){
-    getGuests()
+    await getGuests()
   } else {
-    getTables()
+    await getTables()
   }
 }
 
@@ -464,7 +465,8 @@ function editTable(table){
 }
 async function deleteTable(table){
   try {
-    await store.deleteTable(table[0])
+    const idObject = table.find((element => typeof element === 'object'))
+    await store.deleteTable(idObject.id)
     tablesTableContents.value = tablesTableContents.value.filter(item => {
       if (item[0] !== table[0]) {
         return true

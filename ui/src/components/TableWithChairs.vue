@@ -1,7 +1,7 @@
 <template>
   <div class="table-with-chairs">
     <h2 class="table-title">Table {{ tableNumber }}</h2>
-    <div>Total Guests: {{ totalGuests }} / {{ chairs }}</div>
+    <div class="table-overview">Total Guests: {{ totalGuests }} / {{ chairs }}</div>
 
     <div v-if="showErrorModal" class="modal-overlay">
       <div class="modal">
@@ -15,6 +15,8 @@
         :list="people"
         group="guests"
         :item-key="'id'"
+        :key="`table_${tableNumber}`"
+
         @start="onDragStart"
         @end="onDragEnd"
         @add="onGuestAdded"
@@ -75,11 +77,32 @@ function closeErrorModal() {
   showErrorModal.value = false;
 }
 
+function recheckTotalGuests() {
+  const tableWithChairs = document.querySelector('.table-with-chairs');
+  for (let i = 0; i < tableWithChairs.length; i++) {
+    const tableOverview = tableWithChairs[i].getElementsByClassName('table-overview');
+    const str = tableOverview[i].textContent;
+    const matchTotal = str.match(/(\d+) \/ (\d+)/);
+    const totalChairs = parseInt(matchTotal[2], 10);
+    let totalGuests = 0;
+    const guestItems = tableWithChairs[i].getElementsByClassName('guest-item');
+    for (let j = 0; j < guestItems.length; j++) {
+      const text = guestItems[j].textContent;
+      const match = text.match(/(\d+)/);
+      const guestCount = parseInt(match[1], 10);
+      totalGuests += guestCount;
+    }
+    tableOverview[i].textContent = `Total Guests: ${totalGuests} / ${totalChairs}`;
+  }
+
+}
+
 
 function resetState() {
   people.value = [...originalPeople.value]; // שחזור הרשימה למצב המקורי
   totalGuests.value = originalTotalGuests.value; // שחזור הטוטאל המקורי
   actionInProgress.value = false;
+  recheckTotalGuests();
 }
 
 function onDragStart() {
@@ -92,6 +115,7 @@ function onDragStart() {
 function onDragEnd() {
   console.log("Drag ended");
   actionInProgress.value = false; // איפוס מצב פעולה לאחר סיום
+  recheckTotalGuests();
 }
 
 async function onGuestAdded(event) {
@@ -100,8 +124,22 @@ async function onGuestAdded(event) {
   console.log('CHAIRS', props.chairs);
   if (newTotalGuests > props.chairs) {
     showErrorModal.value = true;
+    event.from.insertBefore(event.item, event.from.children[event.oldIndex]);
     await nextTick(() => {
-      event.from.insertBefore(event.item, event.from.children[event.oldIndex]);
+      // Assuming 'event' is your event object
+      const parentElement = event.from.parentElement;
+      const guestItems = parentElement.getElementsByClassName('guest-item');
+      const str = event.from.parentElement.children[1].textContent;
+      const matchTotal = str.match(/(\d+) \/ (\d+)/);
+      const totalChairs = parseInt(matchTotal[2], 10);
+      let totalGuests = 0;
+      for (let i = 0; i < guestItems.length; i++) {
+        const text = guestItems[i].textContent;
+        const match = text.match(/(\d+)/);
+        const guestCount = parseInt(match[1], 10);
+        totalGuests += guestCount;
+      }
+      event.from.parentElement.children[1].textContent = `Total Guests: ${totalGuests} / ${totalChairs}`;
       resetState();
     });
   } else {

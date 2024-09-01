@@ -10,7 +10,6 @@
       >
         {{ title }}
       </th>
-      <th></th>
     </tr>
     </thead>
 
@@ -135,6 +134,8 @@ const updateTable = async (index) => {
   }
 
   try {
+    console.log('Table ID:', tableId);
+    console.log('Updated content:', updatedContent);
     await store.updateTable(tableId, updatedContent);
     props.contents[index][1] = updatedContent.guestCount;
   } catch (error) {

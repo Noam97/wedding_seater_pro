@@ -69,7 +69,7 @@ const results = ref([]);
 const errGenerate = ref("");
 async function init() {
   try {
-    const savedResults = localStorage.getItem('seatingArrangement');
+    const savedResults = localStorage.getItem('seatingArrangement');;
     results.value = savedResults ? JSON.parse(savedResults) : (await store.generateTables()).data;
   } catch (error) {
     console.log(error);
@@ -81,6 +81,8 @@ async function init() {
 init();
 
 const sortedResults = computed(() => {
+  console.log('Sorting tables by table number');
+  console.log(results.value);
   return results.value.slice().sort((a, b) => a.table.table_number - b.table.table_number);
 });
 
