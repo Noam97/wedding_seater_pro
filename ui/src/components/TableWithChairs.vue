@@ -8,8 +8,18 @@
       <div class="modal">
         <!-- Error message styled like "Changes Detected" -->
         <p class="text-lg font-bold mb-4">Error: Number of guests exceeds the number of available chairs!</p>
-        <!-- Close button styled like "Discard Changes" button -->
-        <button @click="closeErrorModal" class="bg-orange-500 text-white px-4 py-2 rounded duration-300 hover:bg-orange-700 hover:text-white hover:shadow-md">
+
+        <!-- "X" icon for close -->
+        <button
+            @click="closeErrorModal"
+            class="text-gray-500 hover:text-gray-700 focus:outline-none absolute top-2 right-2"
+            style="position: absolute; top: 10px; right: 10px;"
+        >
+          <i class="fas fa-times"></i> <!-- השתמש באייקון מתוך Font Awesome -->
+        </button>
+
+        <!-- Close button styled in gray -->
+        <button @click="closeErrorModal" class="bg-gray-500 text-white px-4 py-2 rounded duration-300 hover:bg-gray-700 hover:text-white hover:shadow-md mt-4">
           Close
         </button>
       </div>
@@ -215,6 +225,7 @@ watch(
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   text-align: center;
   z-index: 1001;
+  position: relative; /* Ensures the "X" button positions correctly */
 }
 
 .full-drop-area {

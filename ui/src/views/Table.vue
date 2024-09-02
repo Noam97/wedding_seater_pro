@@ -76,11 +76,21 @@
         v-if="showUnchangedModal"
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
     >
-      <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md text-center">
+      <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md text-center relative">
         <h2 class="text-lg font-bold mb-4">Seating arrangement unchanged!</h2>
+
+        <!-- "X" icon for close -->
         <button
             @click="closeUnchangedModal"
-            class="bg-orange-500 text-white px-4 py-2 rounded duration-300 hover:bg-orange-700 hover:text-white hover:shadow-md mt-4"
+            class="text-gray-500 hover:text-gray-700 focus:outline-none absolute top-2 right-2"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+
+        <!-- Close button styled in gray -->
+        <button
+            @click="closeUnchangedModal"
+            class="bg-gray-500 text-white px-4 py-2 rounded duration-300 hover:bg-gray-700 hover:text-white hover:shadow-md mt-4"
         >
           Close
         </button>
