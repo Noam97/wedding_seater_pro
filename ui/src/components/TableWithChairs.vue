@@ -10,18 +10,8 @@
       </div>
     </div>
 
-    <draggable
-        class="full-drop-area"
-        :list="people"
-        group="guests"
-        :item-key="'id'"
-        :key="`table_${tableNumber}`"
-
-        @start="onDragStart"
-        @end="onDragEnd"
-        @add="onGuestAdded"
-        @remove="onGuestRemoved"
-    >
+    <draggable class="full-drop-area" :list="people" group="guests" :item-key="'id'" :key="`table_${tableNumber}`"
+               @start="onDragStart" @end="onDragEnd" @add="onGuestAdded" @remove="onGuestRemoved">
       <template #item="{ element }">
         <div class="guest-item">
           {{ element.name }} ({{ element.count }})
@@ -29,12 +19,8 @@
         </div>
       </template>
     </draggable>
-    <div
-        v-for="(chair, index) in allChairs"
-        :key="`chair_${index}`"
-        :class="getChairClass(index)"
-        :style="getChairStyle(index)"
-    ></div>
+    <div v-for="(chair, index) in allChairs" :key="`chair_${index}`" :class="getChairClass(index)"
+         :style="getChairStyle(index)"></div>
   </div>
 </template>
 
@@ -109,11 +95,11 @@ function onDragStart() {
   originalPeople.value = [...people.value]; // שמירת המצב הראשוני של השולחן
   originalTotalGuests.value = totalGuests.value; // שמירת מספר האורחים הכולל המקורי
   actionInProgress.value = true; // סימון שהגרירה התחילה
-  console.log("Drag started, original state and total saved");
+  // console.log("Drag started, original state and total saved");
 }
 
 function onDragEnd() {
-  console.log("Drag ended");
+  // console.log("Drag ended");
   actionInProgress.value = false; // איפוס מצב פעולה לאחר סיום
   recheckTotalGuests();
 }
@@ -121,7 +107,7 @@ function onDragEnd() {
 async function onGuestAdded(event) {
   await nextTick();
   const newTotalGuests = calculateTotalGuests(people.value);
-  console.log('CHAIRS', props.chairs);
+  // console.log('CHAIRS', props.chairs);
   if (newTotalGuests > props.chairs) {
     showErrorModal.value = true;
     event.from.insertBefore(event.item, event.from.children[event.oldIndex]);

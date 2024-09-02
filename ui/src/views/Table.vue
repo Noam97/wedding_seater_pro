@@ -1,5 +1,6 @@
 <template>
   <div class="flex justify-center items-center gap-20 min-h-screen">
+    <!-- Error Display -->
     <div v-if="errGenerate.length" class="text-center mb-5 text-5xl text-primary-color">
       <p>{{ errGenerate }}</p>
       <div class="flex justify-center items-center mt-10">
@@ -7,50 +8,51 @@
       </div>
       <button
           class="mt-10 duration-300 border-2 border-primary-color bg-primary-color text-white rounded-xl px-10 py-2 hover:shadow-md"
-          @click="router.push('/')"
-      >
+          @click="router.push('/')">
         Go Home
       </button>
     </div>
+
+    <!-- Seating Arrangement Display -->
     <div v-else class="text-center absolute top-16">
       <h1 class="text-4xl text-primary-color uppercase mb-8">SEATING ARRANGEMENT</h1>
-      <div class="flex justify-around items-center gap-16 border border-purple-300 rounded-xl shadow-md px-6 py-2 w-full"
-           style="margin-bottom: 0;">
+      <div
+          class="flex justify-around items-center gap-16 border border-purple-300 rounded-xl shadow-md px-6 py-2 w-full"
+          style="margin-bottom: 0;">
         <div class="flex justify-center gap-20">
-          <button
-              @click="saveState"
-              class="duration-300 border-2 border-primary-color text-primary-color rounded-xl px-10 py-2 hover:bg-primary-color hover:text-white hover:shadow-md"
-          >
+          <button @click="initiateSave"
+                  class="duration-300 border-2 border-primary-color text-primary-color rounded-xl px-10 py-2 hover:bg-primary-color hover:text-white hover:shadow-md">
             Save Changes
           </button>
 
-          <button
-              v-if="excelData.length"
-              class="duration-300 border-2 border-primary-color text-primary-color rounded-xl px-10 py-2 hover:bg-primary-color hover:text-white hover:shadow-md"
-          >
-            <ExcelDownload
-                :data="excelData"
-                :headers="['Table Number', 'Name', 'Count']"
-                :sheetName="`Seating Arrangement`"
-                :fileName="`Seating Arrangement.xlsx`"
-                buttonText="Download Excel"
-                class="text-lg"
-            />
+          <button v-if="excelData.length"
+                  class="duration-300 border-2 border-primary-color text-primary-color rounded-xl px-10 py-2 hover:bg-primary-color hover:text-white hover:shadow-md">
+            <ExcelDownload :data="excelData" :headers="['Table Number', 'Name', 'Count']"
+                           :sheetName="`Seating Arrangement`" :fileName="`Seating Arrangement.xlsx`" buttonText="Download Excel"
+                           class="text-lg" />
           </button>
         </div>
       </div>
 
       <div class="tables-container">
-        <table-with-chairs
-            v-for="(tableData, index) in sortedResults"
-            :key="index"
-            :table-data="tableData"
-            :chairs="tableData.table.places_count"
-            :people="tableData.guests"
-            :table-number="tableData.table.table_number"
-            :guests-count="tableData.guests.length"
-            @update:people="updateTableGuests(tableData.table.id, $event)"
-        ></table-with-chairs>
+        <table-with-chairs v-for="(tableData, index) in sortedResults" :key="index" :table-data="tableData"
+                           :chairs="tableData.table.places_count" :people="tableData.guests" :table-number="tableData.table.table_number"
+                           :guests-count="tableData.guests.length"
+                           @update:people="updateTableGuests(tableData.table.id, $event)"></table-with-chairs>
+      </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div v-if="showModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-lg font-bold mb-4">Changes Detected</h2>
+        <ul class="mb-4">
+          <li v-for="(log, index) in logs" :key="index" class="mb-2">{{ log }}</li>
+        </ul>
+        <div class="flex justify-end gap-4">
+          <button @click="confirmSave" class="bg-primary-color text-white px-4 py-2 rounded">Confirm Save</button>
+          <button @click="discardChanges" class="bg-red-500 text-white px-4 py-2 rounded">Discard Changes</button>
+        </div>
       </div>
     </div>
   </div>
@@ -67,10 +69,15 @@ const store = useStore();
 const router = useRouter();
 const results = ref([]);
 const errGenerate = ref("");
+const previousState = ref([]);
+const showModal = ref(false);
+const logs = ref([]);
+
 async function init() {
   try {
-    const savedResults = localStorage.getItem('seatingArrangement');;
+    const savedResults = localStorage.getItem('seatingArrangement');
     results.value = savedResults ? JSON.parse(savedResults) : (await store.generateTables()).data;
+    previousState.value = JSON.parse(JSON.stringify(results.value));
   } catch (error) {
     console.log(error);
     errGenerate.value = error.response.data.error;
@@ -81,8 +88,6 @@ async function init() {
 init();
 
 const sortedResults = computed(() => {
-  console.log('Sorting tables by table number');
-  console.log(results.value);
   return results.value.slice().sort((a, b) => a.table.table_number - b.table.table_number);
 });
 
@@ -101,16 +106,75 @@ const excelData = computed(() => {
 async function updateTableGuests(tableId, updatedGuests) {
   const table = results.value.find(t => t.table.id === tableId);
   if (table) {
-    console.log('Updating table with ID:', tableId, 'with updated guests:', updatedGuests);
     table.guests = updatedGuests;
   } else {
     console.error('Table not found with ID:', tableId);
   }
-};
+}
 
-function saveState() {
+function initiateSave() {
+  const prevState = JSON.parse(JSON.stringify(previousState.value));
+  const newState = JSON.parse(JSON.stringify(results.value));
+  const changes = trackChanges(prevState, newState);
+
+  if (!changes || changes.length <= 0) {
+    return alert('Seating arrangement unchanged!');
+  }
+
+  logs.value = changes;
+  showModal.value = true;
+}
+
+function confirmSave() {
   localStorage.setItem('seatingArrangement', JSON.stringify(results.value));
   alert('Seating arrangement saved!');
+  showModal.value = false;
+}
+
+function discardChanges() {
+  results.value = JSON.parse(JSON.stringify(previousState.value));
+  alert('Changes discarded!');
+  showModal.value = false;
+}
+
+function trackChanges(state1, state2) {
+  const createGuestTableMap = (state) => {
+    const guestTableMap = {};
+    state.forEach(({ guests, table }) => {
+      guests.forEach(guest => {
+        guestTableMap[`${guest.name}_${guest.id}`] = table.table_number;
+      });
+    });
+    return guestTableMap;
+  };
+
+  const state1Map = createGuestTableMap(state1);
+  const state2Map = createGuestTableMap(state2);
+
+  const logEntries = [];
+
+  Object.keys(state1Map).forEach(guestKey => {
+    if (state2Map[guestKey] !== undefined && state1Map[guestKey] !== state2Map[guestKey]) {
+      const [name, id] = guestKey.split('_');
+      logEntries.push(`Guest ${name} moved from table ${state1Map[guestKey]} to table ${state2Map[guestKey]}`);
+    }
+  });
+
+  Object.keys(state2Map).forEach(guestKey => {
+    if (state1Map[guestKey] === undefined) {
+      const [name, id] = guestKey.split('_');
+      logEntries.push(`Guest ${name} appeared at table ${state2Map[guestKey]}`);
+    }
+  });
+
+  Object.keys(state1Map).forEach(guestKey => {
+    if (state2Map[guestKey] === undefined) {
+      const [name, id] = guestKey.split('_');
+      logEntries.push(`Guest ${name} was removed from table ${state1Map[guestKey]}`);
+    }
+  });
+
+  return logEntries;
 }
 </script>
 
