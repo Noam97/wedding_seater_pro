@@ -6,20 +6,8 @@
     <!-- Error Modal -->
     <div v-if="showErrorModal" class="modal-overlay">
       <div class="modal">
-        <!-- Error message styled like "Changes Detected" -->
         <p class="text-lg font-bold mb-4">Error: Number of guests exceeds the number of available chairs!</p>
-
-        <!-- "X" icon for close -->
-        <button
-            @click="closeErrorModal"
-            class="text-gray-500 hover:text-gray-700 focus:outline-none absolute top-2 right-2"
-            style="position: absolute; top: 10px; right: 10px;"
-        >
-          <i class="fas fa-times"></i> <!-- השתמש באייקון מתוך Font Awesome -->
-        </button>
-
-        <!-- Close button styled in gray -->
-        <button @click="closeErrorModal" class="bg-gray-500 text-white px-4 py-2 rounded duration-300 hover:bg-gray-700 hover:text-white hover:shadow-md mt-4">
+        <button @click="closeErrorModal" class="bg-orange-500 text-white px-4 py-2 rounded duration-300 hover:bg-orange-700 hover:text-white hover:shadow-md">
           Close
         </button>
       </div>
@@ -39,6 +27,7 @@
          :style="getChairStyle(index)"></div>
   </div>
 </template>
+
 
 <script setup>
 import draggable from 'vuedraggable';
@@ -66,10 +55,26 @@ const emit = defineEmits(['update:people']);
 const people = ref([...props.people]);
 const allChairs = ref(props.chairs);
 const totalGuests = ref(calculateTotalGuests(people.value));
-const originalPeople = ref([...props.people]);
-const originalTotalGuests = ref(calculateTotalGuests(props.people));
+
+// Non-reactive state to store the original state
+let originalPeople = JSON.parse(JSON.stringify(props.people));
+let originalTotalGuests = calculateTotalGuests(props.people);
 const showErrorModal = ref(false);
 const actionInProgress = ref(false);
+
+// Watcher to keep track of changes to props.people and initialize original states
+watch(
+    () => props.people,
+    (newPeople) => {
+      people.value = [...newPeople];
+      totalGuests.value = calculateTotalGuests(newPeople);
+      originalPeople = JSON.parse(JSON.stringify(newPeople)); // Save the original state correctly
+      originalTotalGuests = calculateTotalGuests(newPeople); // Save the original total
+      console.log('Watch triggered: People updated:', people.value);
+      console.log('Watch triggered: Total guests updated:', totalGuests.value);
+    },
+    { deep: true, immediate: true }
+);
 
 function calculateTotalGuests(peopleArray) {
   return peopleArray.reduce((total, guest) => total + guest.count, 0);
@@ -79,74 +84,82 @@ function closeErrorModal() {
   showErrorModal.value = false;
 }
 
-function recheckTotalGuests() {
-  const tableWithChairs = document.querySelector('.table-with-chairs');
-  for (let i = 0; i < tableWithChairs.length; i++) {
-    const tableOverview = tableWithChairs[i].getElementsByClassName('table-overview');
-    const str = tableOverview[i].textContent;
-    const matchTotal = str.match(/(\d+) \/ (\d+)/);
-    const totalChairs = parseInt(matchTotal[2], 10);
-    let totalGuests = 0;
-    const guestItems = tableWithChairs[i].getElementsByClassName('guest-item');
-    for (let j = 0; j < guestItems.length; j++) {
-      const text = guestItems[j].textContent;
-      const match = text.match(/(\d+)/);
-      const guestCount = parseInt(match[1], 10);
-      totalGuests += guestCount;
-    }
-    tableOverview[i].textContent = `Total Guests: ${totalGuests} / ${totalChairs}`;
-  }
-}
-
 function resetState() {
-  people.value = [...originalPeople.value];
-  totalGuests.value = originalTotalGuests.value;
+  console.log('Resetting state...');
+  console.log('Original people state before reset:', originalPeople);
+  console.log('Original totalGuests before reset:', originalTotalGuests);
+
+  // Reset to original state
+  people.value = JSON.parse(JSON.stringify(originalPeople));
+  totalGuests.value = originalTotalGuests;
+
+  console.log('People state after reset:', people.value);
+  console.log('Total guests after reset:', totalGuests.value);
+
   actionInProgress.value = false;
-  recheckTotalGuests();
+
+  // Emit update to ensure state is consistent after reset
+  emit('update:people', people.value);
 }
 
 function onDragStart() {
-  originalPeople.value = [...people.value];
-  originalTotalGuests.value = totalGuests.value;
+  originalPeople = JSON.parse(JSON.stringify(people.value)); // Deep copy to preserve original state
+  originalTotalGuests = totalGuests.value;
   actionInProgress.value = true;
+
+  console.log('Drag started');
+  console.log('Original people state:', originalPeople);
+  console.log('Original totalGuests:', originalTotalGuests);
 }
 
 function onDragEnd() {
+  console.log('Drag ended');
   actionInProgress.value = false;
-  recheckTotalGuests();
 }
 
 async function onGuestAdded(event) {
+  console.log('Guest added');
   await nextTick();
+
+  // Calculate new total guests but don't update `totalGuests` yet
   const newTotalGuests = calculateTotalGuests(people.value);
+
+  console.log('New totalGuests after add:', newTotalGuests);
+  console.log('Current people state after add:', people.value);
+
   if (newTotalGuests > props.chairs) {
     showErrorModal.value = true;
+
+    console.log('Exceeded number of chairs, reverting changes.');
+
+    // Revert the item back to its original position in DOM
     event.from.insertBefore(event.item, event.from.children[event.oldIndex]);
+
+    // Wait for next DOM update cycle to ensure no residual changes remain
     await nextTick(() => {
-      const parentElement = event.from.parentElement;
-      const guestItems = parentElement.getElementsByClassName('guest-item');
-      const str = event.from.parentElement.children[1].textContent;
-      const matchTotal = str.match(/(\d+) \/ (\d+)/);
-      const totalChairs = parseInt(matchTotal[2], 10);
-      let totalGuests = 0;
-      for (let i = 0; i < guestItems.length; i++) {
-        const text = guestItems[i].textContent;
-        const match = text.match(/(\d+)/);
-        const guestCount = parseInt(match[1], 10);
-        totalGuests += guestCount;
-      }
-      event.from.parentElement.children[1].textContent = `Total Guests: ${totalGuests} / ${totalChairs}`;
-      resetState();
+      resetState();  // Ensure proper reset for the current table
     });
   } else {
+    // Only now, update `totalGuests` after confirming the move is valid
     totalGuests.value = newTotalGuests;
     emit('update:people', people.value);
+
+    console.log('Valid move, updated state.');
+    console.log('Updated people state:', people.value);
+    console.log('Updated totalGuests:', totalGuests.value);
   }
 }
 
-function onGuestRemoved() {
-  totalGuests.value = calculateTotalGuests(people.value);
-  emit('update:people', people.value);
+function onGuestRemoved(event) {
+  console.log('Guest removed');
+
+  // Do not update totalGuests here; only calculate the new value
+  const newTotalGuests = calculateTotalGuests(people.value);
+
+  console.log('People state after removal:', people.value);
+  console.log('Total guests after removal:', newTotalGuests);
+
+  // Do not update totalGuests.value here, wait for the confirmation of the move.
 }
 
 function getChairStyle(index) {
@@ -162,18 +175,10 @@ function getChairStyle(index) {
   };
 }
 
+// Correctly define the getChairClass function
 function getChairClass(index) {
   return index < totalGuests.value ? 'chair active' : 'chair no-active';
 }
-
-watch(
-    () => props.people,
-    (newPeople) => {
-      people.value = [...newPeople];
-      totalGuests.value = calculateTotalGuests(newPeople);
-    },
-    { deep: true, immediate: true }
-);
 </script>
 
 <style scoped>
@@ -225,7 +230,6 @@ watch(
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   text-align: center;
   z-index: 1001;
-  position: relative; /* Ensures the "X" button positions correctly */
 }
 
 .full-drop-area {
