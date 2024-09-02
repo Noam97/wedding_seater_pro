@@ -59,7 +59,7 @@
       </div>
     </div>
 
-    <!-- Include the new ConfirmationModal component -->
+    <!-- Confirmation Modal -->
     <ConfirmationModal
         :show="showModal"
         :logs="logs"
@@ -70,13 +70,29 @@
         @discard="discardChanges"
         @close="closeModal"
     />
+
+    <!-- Unchanged Arrangement Modal -->
+    <div
+        v-if="showUnchangedModal"
+        class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+    >
+      <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md text-center">
+        <h2 class="text-lg font-bold mb-4">Seating arrangement unchanged!</h2>
+        <button
+            @click="closeUnchangedModal"
+            class="bg-orange-500 text-white px-4 py-2 rounded duration-300 hover:bg-orange-700 hover:text-white hover:shadow-md mt-4"
+        >
+          Close
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import ExcelDownload from "@/components/ExcelDownload.vue";
 import TableWithChairs from "@/components/TableWithChairs.vue";
-import ConfirmationModal from "@/components/ConfirmationModal.vue"; // Import the new component
+import ConfirmationModal from "@/components/ConfirmationModal.vue";
 import { useStore } from "@/store/index.js";
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
@@ -87,6 +103,7 @@ const results = ref([]);
 const errGenerate = ref("");
 const previousState = ref([]);
 const showModal = ref(false);
+const showUnchangedModal = ref(false); // New state for unchanged modal
 const logs = ref([]);
 const confirmationMade = ref(false);
 const confirmationMessage = ref("");
@@ -141,7 +158,8 @@ function initiateSave() {
   const changes = trackChanges(prevState, newState);
 
   if (!changes || changes.length <= 0) {
-    return alert("Seating arrangement unchanged!");
+    showUnchangedModal.value = true; // Show the unchanged modal
+    return;
   }
 
   logs.value = changes;
@@ -168,6 +186,10 @@ function closeModal() {
   confirmationMade.value = false;
   confirmationMessage.value = "";
   lastAction.value = ""; // Reset the last action
+}
+
+function closeUnchangedModal() {
+  showUnchangedModal.value = false;
 }
 
 function trackChanges(state1, state2) {

@@ -3,13 +3,19 @@
     <h2 class="table-title">Table {{ tableNumber }}</h2>
     <div class="table-overview">Total Guests: {{ totalGuests }} / {{ chairs }}</div>
 
+    <!-- Error Modal -->
     <div v-if="showErrorModal" class="modal-overlay">
       <div class="modal">
-        <p>Error: Number of guests exceeds the number of available chairs!</p>
-        <button @click="closeErrorModal">Close</button>
+        <!-- Error message styled like "Changes Detected" -->
+        <p class="text-lg font-bold mb-4">Error: Number of guests exceeds the number of available chairs!</p>
+        <!-- Close button styled like "Discard Changes" button -->
+        <button @click="closeErrorModal" class="bg-orange-500 text-white px-4 py-2 rounded duration-300 hover:bg-orange-700 hover:text-white hover:shadow-md">
+          Close
+        </button>
       </div>
     </div>
 
+    <!-- Draggable Guests -->
     <draggable class="full-drop-area" :list="people" group="guests" :item-key="'id'" :key="`table_${tableNumber}`"
                @start="onDragStart" @end="onDragEnd" @add="onGuestAdded" @remove="onGuestRemoved">
       <template #item="{ element }">
@@ -80,39 +86,33 @@ function recheckTotalGuests() {
     }
     tableOverview[i].textContent = `Total Guests: ${totalGuests} / ${totalChairs}`;
   }
-
 }
 
-
 function resetState() {
-  people.value = [...originalPeople.value]; // שחזור הרשימה למצב המקורי
-  totalGuests.value = originalTotalGuests.value; // שחזור הטוטאל המקורי
+  people.value = [...originalPeople.value];
+  totalGuests.value = originalTotalGuests.value;
   actionInProgress.value = false;
   recheckTotalGuests();
 }
 
 function onDragStart() {
-  originalPeople.value = [...people.value]; // שמירת המצב הראשוני של השולחן
-  originalTotalGuests.value = totalGuests.value; // שמירת מספר האורחים הכולל המקורי
-  actionInProgress.value = true; // סימון שהגרירה התחילה
-  // console.log("Drag started, original state and total saved");
+  originalPeople.value = [...people.value];
+  originalTotalGuests.value = totalGuests.value;
+  actionInProgress.value = true;
 }
 
 function onDragEnd() {
-  // console.log("Drag ended");
-  actionInProgress.value = false; // איפוס מצב פעולה לאחר סיום
+  actionInProgress.value = false;
   recheckTotalGuests();
 }
 
 async function onGuestAdded(event) {
   await nextTick();
   const newTotalGuests = calculateTotalGuests(people.value);
-  // console.log('CHAIRS', props.chairs);
   if (newTotalGuests > props.chairs) {
     showErrorModal.value = true;
     event.from.insertBefore(event.item, event.from.children[event.oldIndex]);
     await nextTick(() => {
-      // Assuming 'event' is your event object
       const parentElement = event.from.parentElement;
       const guestItems = parentElement.getElementsByClassName('guest-item');
       const str = event.from.parentElement.children[1].textContent;
@@ -215,14 +215,6 @@ watch(
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   text-align: center;
   z-index: 1001;
-}
-
-.modal button {
-  margin-top: 10px;
-  padding: 5px 10px;
-  border: none;
-  background-color: #f0f0f0;
-  cursor: pointer;
 }
 
 .full-drop-area {
