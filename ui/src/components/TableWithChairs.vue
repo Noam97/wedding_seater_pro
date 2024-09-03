@@ -55,23 +55,21 @@ const emit = defineEmits(['update:people']);
 const people = ref([...props.people]);
 const allChairs = ref(props.chairs);
 const totalGuests = ref(calculateTotalGuests(people.value));
-
-// Non-reactive state to store the original state
-let originalPeople = JSON.parse(JSON.stringify(props.people));
-let originalTotalGuests = calculateTotalGuests(props.people);
+const originalPeople = ref([]);  // to store the original state
+const originalTotalGuests = ref(totalGuests.value);
 const showErrorModal = ref(false);
 const actionInProgress = ref(false);
 
-// Watcher to keep track of changes to props.people and initialize original states
+// Initialize original state
 watch(
     () => props.people,
     (newPeople) => {
       people.value = [...newPeople];
       totalGuests.value = calculateTotalGuests(newPeople);
-      originalPeople = JSON.parse(JSON.stringify(newPeople)); // Save the original state correctly
-      originalTotalGuests = calculateTotalGuests(newPeople); // Save the original total
-      console.log('Watch triggered: People updated:', people.value);
-      console.log('Watch triggered: Total guests updated:', totalGuests.value);
+      originalPeople.value = JSON.parse(JSON.stringify(newPeople)); // Save the original state correctly
+      originalTotalGuests.value = calculateTotalGuests(newPeople); // Save the original total
+      console.log(`Table ${props.tableNumber}: Watch triggered - People updated:`, JSON.stringify(people.value));
+      console.log(`Table ${props.tableNumber}: Watch triggered - Total guests updated:`, totalGuests.value);
     },
     { deep: true, immediate: true }
 );
@@ -84,82 +82,94 @@ function closeErrorModal() {
   showErrorModal.value = false;
 }
 
-function resetState() {
-  console.log('Resetting state...');
-  console.log('Original people state before reset:', originalPeople);
-  console.log('Original totalGuests before reset:', originalTotalGuests);
-
-  // Reset to original state
-  people.value = JSON.parse(JSON.stringify(originalPeople));
-  totalGuests.value = originalTotalGuests;
-
-  console.log('People state after reset:', people.value);
-  console.log('Total guests after reset:', totalGuests.value);
-
-  actionInProgress.value = false;
-
-  // Emit update to ensure state is consistent after reset
-  emit('update:people', people.value);
-}
-
 function onDragStart() {
-  originalPeople = JSON.parse(JSON.stringify(people.value)); // Deep copy to preserve original state
-  originalTotalGuests = totalGuests.value;
+  originalPeople.value = JSON.parse(JSON.stringify(people.value)); // Deep copy to preserve original state
+  originalTotalGuests.value = totalGuests.value;
   actionInProgress.value = true;
 
-  console.log('Drag started');
-  console.log('Original people state:', originalPeople);
-  console.log('Original totalGuests:', originalTotalGuests);
+  console.log(`Table ${props.tableNumber}: Drag started`);
+  console.log(`Table ${props.tableNumber}: Original people state:`, JSON.stringify(originalPeople.value));
+  console.log(`Table ${props.tableNumber}: Original totalGuests:`, originalTotalGuests.value);
 }
 
 function onDragEnd() {
-  console.log('Drag ended');
+  console.log(`Table ${props.tableNumber}: Drag ended`);
   actionInProgress.value = false;
+
+  // Update last valid state after drag end for both tables
+  originalPeople.value = JSON.parse(JSON.stringify(people.value));
+  originalTotalGuests.value = totalGuests.value;
+  console.log(`Table ${props.tableNumber}: Updated last valid state after drag end.`);
 }
 
 async function onGuestAdded(event) {
-  console.log('Guest added');
+  console.log(`Table ${props.tableNumber}: Guest added`);
   await nextTick();
-
-  // Calculate new total guests but don't update `totalGuests` yet
   const newTotalGuests = calculateTotalGuests(people.value);
 
-  console.log('New totalGuests after add:', newTotalGuests);
-  console.log('Current people state after add:', people.value);
+  console.log(`Table ${props.tableNumber}: New totalGuests after add:`, newTotalGuests);
+  console.log(`Table ${props.tableNumber}: Current people state after add:`, JSON.stringify(people.value));
 
   if (newTotalGuests > props.chairs) {
     showErrorModal.value = true;
 
-    console.log('Exceeded number of chairs, reverting changes.');
+    console.log(`Table ${props.tableNumber}: Exceeded number of chairs, reverting changes.`);
 
     // Revert the item back to its original position in DOM
     event.from.insertBefore(event.item, event.from.children[event.oldIndex]);
 
     // Wait for next DOM update cycle to ensure no residual changes remain
     await nextTick(() => {
-      resetState();  // Ensure proper reset for the current table
+      resetState();  // Reset destination table
+      emit('update:people', people.value); // Emit to notify state change
+
+      // Emit a custom event to notify the source table to reset
+      const sourceTableComponent = event.from.__vueParentComponent.ctx; // Get the source table component
+      if (sourceTableComponent && sourceTableComponent.resetState) {
+        console.log(`Table ${props.tableNumber}: Resetting source table state.`);
+        sourceTableComponent.resetState();  // Reset source table
+        emit('update:people', sourceTableComponent.people.value); // Emit to notify state change of source table
+      }
     });
+
   } else {
-    // Only now, update `totalGuests` after confirming the move is valid
     totalGuests.value = newTotalGuests;
     emit('update:people', people.value);
 
-    console.log('Valid move, updated state.');
-    console.log('Updated people state:', people.value);
-    console.log('Updated totalGuests:', totalGuests.value);
+    console.log(`Table ${props.tableNumber}: Valid move, updated state.`);
+    console.log(`Table ${props.tableNumber}: Updated people state:`, JSON.stringify(people.value));
+    console.log(`Table ${props.tableNumber}: Updated totalGuests:`, totalGuests.value);
   }
 }
 
-function onGuestRemoved(event) {
-  console.log('Guest removed');
+function resetState() {
+  console.log(`Table ${props.tableNumber}: Resetting state...`);
+  console.log(`Table ${props.tableNumber}: Last valid people state before reset:`, JSON.stringify(originalPeople.value));
+  console.log(`Table ${props.tableNumber}: Last valid totalGuests before reset:`, originalTotalGuests.value);
 
-  // Do not update totalGuests here; only calculate the new value
-  const newTotalGuests = calculateTotalGuests(people.value);
+  // Reset to original state
+  people.value = JSON.parse(JSON.stringify(originalPeople.value));
+  totalGuests.value = originalTotalGuests.value;
 
-  console.log('People state after removal:', people.value);
-  console.log('Total guests after removal:', newTotalGuests);
+  console.log(`Table ${props.tableNumber}: People state after reset:`, JSON.stringify(people.value));
+  console.log(`Table ${props.tableNumber}: Total guests after reset:`, totalGuests.value);
 
-  // Do not update totalGuests.value here, wait for the confirmation of the move.
+  actionInProgress.value = false;
+
+  // Emit to ensure the state is consistent
+  emit('update:people', people.value);
+}
+
+
+
+
+function onGuestRemoved() {
+  console.log(`Table ${props.tableNumber}: Guest removed`);
+  totalGuests.value = calculateTotalGuests(people.value);
+  emit('update:people', people.value);
+
+  console.log(`Table ${props.tableNumber}: People state after removal:`, JSON.stringify(people.value));
+  console.log(`Table ${props.tableNumber}: Total guests after removal:`, totalGuests.value);
 }
 
 function getChairStyle(index) {
@@ -175,7 +185,6 @@ function getChairStyle(index) {
   };
 }
 
-// Correctly define the getChairClass function
 function getChairClass(index) {
   return index < totalGuests.value ? 'chair active' : 'chair no-active';
 }
