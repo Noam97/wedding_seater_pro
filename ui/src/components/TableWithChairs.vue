@@ -6,7 +6,9 @@
     <!-- Error Modal -->
     <div v-if="showErrorModal" class="modal-overlay">
       <div class="modal">
+        <!-- Error message styled like "Changes Detected" -->
         <p class="text-lg font-bold mb-4">Error: Number of guests exceeds the number of available chairs!</p>
+        <!-- Close button styled like "Discard Changes" button -->
         <button @click="closeErrorModal" class="bg-orange-500 text-white px-4 py-2 rounded duration-300 hover:bg-orange-700 hover:text-white hover:shadow-md">
           Close
         </button>
@@ -27,7 +29,6 @@
          :style="getChairStyle(index)"></div>
   </div>
 </template>
-
 
 <script setup>
 import draggable from 'vuedraggable';
@@ -55,24 +56,10 @@ const emit = defineEmits(['update:people']);
 const people = ref([...props.people]);
 const allChairs = ref(props.chairs);
 const totalGuests = ref(calculateTotalGuests(people.value));
-const originalPeople = ref([]);  // to store the original state
-const originalTotalGuests = ref(totalGuests.value);
+const originalPeople = ref([...props.people]);
+const originalTotalGuests = ref(calculateTotalGuests(props.people));
 const showErrorModal = ref(false);
 const actionInProgress = ref(false);
-
-// Initialize original state
-watch(
-    () => props.people,
-    (newPeople) => {
-      people.value = [...newPeople];
-      totalGuests.value = calculateTotalGuests(newPeople);
-      originalPeople.value = JSON.parse(JSON.stringify(newPeople)); // Save the original state correctly
-      originalTotalGuests.value = calculateTotalGuests(newPeople); // Save the original total
-      console.log(`Table ${props.tableNumber}: Watch triggered - People updated:`, JSON.stringify(people.value));
-      console.log(`Table ${props.tableNumber}: Watch triggered - Total guests updated:`, totalGuests.value);
-    },
-    { deep: true, immediate: true }
-);
 
 function calculateTotalGuests(peopleArray) {
   return peopleArray.reduce((total, guest) => total + guest.count, 0);
@@ -82,94 +69,74 @@ function closeErrorModal() {
   showErrorModal.value = false;
 }
 
-function onDragStart() {
-  originalPeople.value = JSON.parse(JSON.stringify(people.value)); // Deep copy to preserve original state
-  originalTotalGuests.value = totalGuests.value;
-  actionInProgress.value = true;
-
-  console.log(`Table ${props.tableNumber}: Drag started`);
-  console.log(`Table ${props.tableNumber}: Original people state:`, JSON.stringify(originalPeople.value));
-  console.log(`Table ${props.tableNumber}: Original totalGuests:`, originalTotalGuests.value);
-}
-
-function onDragEnd() {
-  console.log(`Table ${props.tableNumber}: Drag ended`);
-  actionInProgress.value = false;
-
-  // Update last valid state after drag end for both tables
-  originalPeople.value = JSON.parse(JSON.stringify(people.value));
-  originalTotalGuests.value = totalGuests.value;
-  console.log(`Table ${props.tableNumber}: Updated last valid state after drag end.`);
-}
-
-async function onGuestAdded(event) {
-  console.log(`Table ${props.tableNumber}: Guest added`);
-  await nextTick();
-  const newTotalGuests = calculateTotalGuests(people.value);
-
-  console.log(`Table ${props.tableNumber}: New totalGuests after add:`, newTotalGuests);
-  console.log(`Table ${props.tableNumber}: Current people state after add:`, JSON.stringify(people.value));
-
-  if (newTotalGuests > props.chairs) {
-    showErrorModal.value = true;
-
-    console.log(`Table ${props.tableNumber}: Exceeded number of chairs, reverting changes.`);
-
-    // Revert the item back to its original position in DOM
-    event.from.insertBefore(event.item, event.from.children[event.oldIndex]);
-
-    // Wait for next DOM update cycle to ensure no residual changes remain
-    await nextTick(() => {
-      resetState();  // Reset destination table
-      emit('update:people', people.value); // Emit to notify state change
-
-      // Emit a custom event to notify the source table to reset
-      const sourceTableComponent = event.from.__vueParentComponent.ctx; // Get the source table component
-      if (sourceTableComponent && sourceTableComponent.resetState) {
-        console.log(`Table ${props.tableNumber}: Resetting source table state.`);
-        sourceTableComponent.resetState();  // Reset source table
-        emit('update:people', sourceTableComponent.people.value); // Emit to notify state change of source table
-      }
-    });
-
-  } else {
-    totalGuests.value = newTotalGuests;
-    emit('update:people', people.value);
-
-    console.log(`Table ${props.tableNumber}: Valid move, updated state.`);
-    console.log(`Table ${props.tableNumber}: Updated people state:`, JSON.stringify(people.value));
-    console.log(`Table ${props.tableNumber}: Updated totalGuests:`, totalGuests.value);
+function recheckTotalGuests() {
+  const tableWithChairs = document.querySelector('.table-with-chairs');
+  for (let i = 0; i < tableWithChairs.length; i++) {
+    const tableOverview = tableWithChairs[i].getElementsByClassName('table-overview');
+    const str = tableOverview[i].textContent;
+    const matchTotal = str.match(/(\d+) \/ (\d+)/);
+    const totalChairs = parseInt(matchTotal[2], 10);
+    let totalGuests = 0;
+    const guestItems = tableWithChairs[i].getElementsByClassName('guest-item');
+    for (let j = 0; j < guestItems.length; j++) {
+      const text = guestItems[j].textContent;
+      const match = text.match(/(\d+)/);
+      const guestCount = parseInt(match[1], 10);
+      totalGuests += guestCount;
+    }
+    tableOverview[i].textContent = `Total Guests: ${totalGuests} / ${totalChairs}`;
   }
 }
 
 function resetState() {
-  console.log(`Table ${props.tableNumber}: Resetting state...`);
-  console.log(`Table ${props.tableNumber}: Last valid people state before reset:`, JSON.stringify(originalPeople.value));
-  console.log(`Table ${props.tableNumber}: Last valid totalGuests before reset:`, originalTotalGuests.value);
-
-  // Reset to original state
-  people.value = JSON.parse(JSON.stringify(originalPeople.value));
+  people.value = [...originalPeople.value];
   totalGuests.value = originalTotalGuests.value;
-
-  console.log(`Table ${props.tableNumber}: People state after reset:`, JSON.stringify(people.value));
-  console.log(`Table ${props.tableNumber}: Total guests after reset:`, totalGuests.value);
-
   actionInProgress.value = false;
-
-  // Emit to ensure the state is consistent
-  emit('update:people', people.value);
+  recheckTotalGuests();
 }
 
+function onDragStart() {
+  originalPeople.value = [...people.value];
+  originalTotalGuests.value = totalGuests.value;
+  actionInProgress.value = true;
+}
 
+function onDragEnd() {
+  actionInProgress.value = false;
+  recheckTotalGuests();
+}
 
+async function onGuestAdded(event) {
+  await nextTick();
+  const newTotalGuests = calculateTotalGuests(people.value);
+  if (newTotalGuests > props.chairs) {
+    showErrorModal.value = true;
+    event.from.insertBefore(event.item, event.from.children[event.oldIndex]);
+    await nextTick(() => {
+      const parentElement = event.from.parentElement;
+      const guestItems = parentElement.getElementsByClassName('guest-item');
+      const str = event.from.parentElement.children[1].textContent;
+      const matchTotal = str.match(/(\d+) \/ (\d+)/);
+      const totalChairs = parseInt(matchTotal[2], 10);
+      let totalGuests = 0;
+      for (let i = 0; i < guestItems.length; i++) {
+        const text = guestItems[i].textContent;
+        const match = text.match(/(\d+)/);
+        const guestCount = parseInt(match[1], 10);
+        totalGuests += guestCount;
+      }
+      event.from.parentElement.children[1].textContent = `Total Guests: ${totalGuests} / ${totalChairs}`;
+      resetState();
+    });
+  } else {
+    totalGuests.value = newTotalGuests;
+    emit('update:people', people.value);
+  }
+}
 
 function onGuestRemoved() {
-  console.log(`Table ${props.tableNumber}: Guest removed`);
   totalGuests.value = calculateTotalGuests(people.value);
   emit('update:people', people.value);
-
-  console.log(`Table ${props.tableNumber}: People state after removal:`, JSON.stringify(people.value));
-  console.log(`Table ${props.tableNumber}: Total guests after removal:`, totalGuests.value);
 }
 
 function getChairStyle(index) {
@@ -188,6 +155,15 @@ function getChairStyle(index) {
 function getChairClass(index) {
   return index < totalGuests.value ? 'chair active' : 'chair no-active';
 }
+
+watch(
+    () => props.people,
+    (newPeople) => {
+      people.value = [...newPeople];
+      totalGuests.value = calculateTotalGuests(newPeople);
+    },
+    { deep: true, immediate: true }
+);
 </script>
 
 <style scoped>

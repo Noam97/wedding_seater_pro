@@ -115,9 +115,6 @@ async function init() {
     results.value = savedResults
         ? JSON.parse(savedResults)
         : (await store.generateTables()).data;
-    console.log( results.value)
-    console.log(savedResults)
-
     previousState.value = JSON.parse(JSON.stringify(results.value));
   } catch (error) {
     console.log(error);
