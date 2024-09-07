@@ -245,6 +245,7 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
             },
         });
 
+
         // Group guests by side and closeness
         const groupedGuests = guestsByUser.reduce((acc, guest) => {
             const key = `${guest.side}-${guest.closeness}`;
@@ -264,6 +265,19 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
             where: { user_id: req.user.id },
             orderBy: { places_count: 'desc' }
         });
+
+        let totalPlacesCount = 0;
+        tables.forEach((table) => {
+            totalPlacesCount += table.places_count;
+        });
+
+        let totalGuests = 0;
+        guestsByUser.forEach((guest) => {
+            totalGuests += guest.count;
+        });
+        if (totalGuests > totalPlacesCount) {
+            return res.status(422).send({error: "The guests number is smaller than chairs number"});
+        }
 
         const seatingPlan = {};
 
