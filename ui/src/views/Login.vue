@@ -1,4 +1,6 @@
 <template>
+  <div class="login-container">
+<!--    <h1 class="page-title">WeddingSeater Pro</h1>-->
   <div class="bg-img flex flex-col justify-center items-center w-screen h-screen bg-gray-100">
     <form
         class="flex flex-col justify-center items-center py-4 px-6 sm:px-10 rounded-lg shadow-lg backdrop-blur-sm bg-white/30"
@@ -64,6 +66,7 @@
         </button>
       </div>
     </form>
+  </div>
   </div>
 </template>
 

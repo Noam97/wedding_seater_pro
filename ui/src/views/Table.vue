@@ -2,9 +2,9 @@
   <div class="flex justify-center items-center gap-20 min-h-screen">
     <!-- Error Display -->
     <div v-if="errGenerate.length" class="text-center mb-5 text-5xl text-primary-color">
-      <p>{{ errGenerate }}</p>
+      <p v-html="errGenerate"></p>
       <div class="flex justify-center items-center mt-10">
-        <img src="../assets/images/brideAndGroomWorried.webp" class="w-[300px] h-[300px]" />
+        <img src="../assets/images/brideAndGroomEmbarrassed.webp" class="w-[300px] h-[300px]" />
       </div>
       <button
           class="mt-10 duration-300 border-2 border-primary-color bg-primary-color text-white rounded-xl px-10 py-2 hover:shadow-md"
@@ -77,7 +77,7 @@
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
     >
       <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md text-center">
-        <h2 class="text-lg font-bold mb-4">Seating arrangement unchanged!</h2>
+        <h2 class="text-lg font-bold mb-4">No Changes Made!</h2>
         <button
             @click="closeUnchangedModal"
             class="bg-orange-500 text-white px-4 py-2 rounded duration-300 hover:bg-orange-700 hover:text-white hover:shadow-md mt-4"

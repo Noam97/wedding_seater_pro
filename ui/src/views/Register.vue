@@ -20,7 +20,7 @@
           <transition name="slide-fade">
             <span v-if="v$.firstName.$error" class="error-msg">
               {{ v$.firstName.$errors[0].$message }}
-              error email
+<!--              error email-->
             </span>
           </transition>
         </div>
@@ -36,7 +36,7 @@
           <transition name="slide-fade">
             <span v-if="v$.lastName.$error" class="error-msg">
               {{ v$.lastName.$errors[0].$message }}
-              error email
+<!--              error email-->
             </span>
           </transition>
         </div>
@@ -51,10 +51,14 @@
           />
 
           <transition name="slide-fade">
-            <span v-if="v$.email.$error" class="error-msg">
-              {{ v$.email.$errors[0].$message }}
-              error email
-            </span>
+    <span v-if="v$.email.$error || emailExistsError" class="error-msg">
+      <span v-if="v$.email.$error">
+        {{ v$.email.$errors[0].$message }}
+      </span>
+      <span v-if="emailExistsError">
+        This email is already registered. Please use a different email.
+      </span>
+    </span>
           </transition>
         </div>
 
@@ -68,12 +72,12 @@
           />
 
           <transition name="slide-fade">
-            <span v-if="v$.password.$error" class="error-msg">
-              {{ v$.password.$errors[0].$message }}
-              error email
-            </span>
+    <span v-if="v$.password.$error" class="error-msg">
+      {{ v$.password.$errors[0].$message }}
+    </span>
           </transition>
         </div>
+
 
         <div class="relative flex flex-col w-full">
           <input
@@ -87,7 +91,7 @@
           <transition name="slide-fade">
             <span v-if="v$.confirm.$error" class="error-msg">
               {{ v$.confirm.$errors[0].$message }}
-              error email
+<!--              error email-->
             </span>
           </transition>
         </div>

@@ -1,5 +1,8 @@
 <template>
   <div class="min-h-screen flex flex-col gap-6 items-center p-10">
+    <h1 class="text-5xl text-primary-color ">
+      WeddingSeater Pro
+    </h1>
     <h1 class="text-4xl text-primary-color ">
       Guest & Table Management
     </h1>
@@ -12,7 +15,7 @@
           :class="openGuestCard ? 'bg-primary-color text-white' : 'text-primary-color'"
           class="duration-300 border-2 border-primary-color  rounded-xl px-10 py-2 hover:shadow-md"
       >
-        Add a guest
+        Add Guest
       </button>
 
       <button
@@ -20,7 +23,7 @@
           :class="openTableCard ? 'bg-primary-color text-white' : 'text-primary-color'"
           class="duration-300 border-2 border-primary-color  rounded-xl px-10 py-2 hover:shadow-md"
       >
-        Add a table
+        Add Table
       </button>
     </div>
 

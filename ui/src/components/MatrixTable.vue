@@ -25,21 +25,21 @@
         <input
             v-if="isEditing(rowIndex, colIndex)"
             v-model="editableContent[adjustmentTitles(titles[colIndex])]"
-            class="input w-full"
+            class="input w-full "
             :type="adjustmentTitles(titles[colIndex]) === 'name' ? 'text' : 'number'"
         />
         <div v-else class="text-gray-900">
           {{ col }}
         </div>
       </td>
-      <td class="text-center text-lg whitespace-nowrap px-3 py-5 font-semibold">
+      <td class="flex items-center justify-center text-center text-lg whitespace-nowrap px-3 py-5 font-semibold">
         <button v-if="editIndex === rowIndex" @click="saveEdit(rowIndex)" class="mr-2">
-          <img src="../assets/images/vi.png" alt="Save" class="w-6 h-6" />
+          <img src="../assets/images/vi.png" alt="Save" class="w-10 h-10 " />
         </button>
         <button v-else @click="startEdit(rowIndex, content)" class="mr-2">
           <img src="../assets/images/edit.jpg" alt="Edit" class="w-6 h-6" />
         </button>
-        <button @click="$emit('delete', content)">
+        <button @click="$emit('delete', content)" class="mr-2">
           <img src="../assets/images/delete.jpg" alt="Delete" class="w-6 h-6" />
         </button>
       </td>

@@ -43,10 +43,20 @@ app.post('/api/login', async (request, response) => {
 
 app.post('/api/register', async (req, res) => {
     try {
-        const { firstName, lastName, email, password } = req.body
+        const { firstName, lastName, email, password } = req.body;
 
         if (!firstName.length || !lastName.length || !email.length || !password.length)
-            return res.status(400).send({ error: 'The payload is missing' })
+            return res.status(400).send({ error: 'The payload is missing' });
+
+        const existingUser = await prisma.user.findUnique({
+            where: {
+                email: email,
+            },
+        });
+
+        if (existingUser) {
+            return res.status(400).json({ error: 'Email already exists' }); // החזר שגיאה אם המייל כבר קיים
+        }
 
         // Hash the password
         const passwordHash = await bcrypt.hash(password, 10);
@@ -66,7 +76,8 @@ app.post('/api/register', async (req, res) => {
         console.error('Error registering user:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
-})
+});
+
 
 app.post('/api/guests', authenticateToken, async (req, res) => {
     try {
@@ -276,7 +287,11 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
             totalGuests += guest.count;
         });
         if (totalGuests > totalPlacesCount) {
-            return res.status(422).send({error: "The guests number is smaller than chairs number"});
+            return res.status(422).send({error: "The guests number<br> is smaller than chairs number"});
+        }
+
+        if (totalGuests == 0 && totalPlacesCount == 0) {
+            return res.status(422).send({error: "You have not added tables and guests yet"});
         }
 
         const seatingPlan = {};
