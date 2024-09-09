@@ -54,7 +54,7 @@
             :people="tableData.guests"
             :table-number="tableData.table.table_number"
             :guests-count="tableData.guests.length"
-            @update:people="updateTableGuests(tableData.table.id, $event)"
+            @update:people="(event, isValid) => updateTableGuests(tableData.table.id, event, isValid)"
         ></table-with-chairs>
       </div>
     </div>
@@ -71,7 +71,6 @@
         @close="closeModal"
     />
 
-    <!-- Unchanged Arrangement Modal -->
     <div
         v-if="showUnchangedModal"
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
@@ -108,6 +107,7 @@ const logs = ref([]);
 const confirmationMade = ref(false);
 const confirmationMessage = ref("");
 const lastAction = ref(""); // Track the last action to style the Close button
+const source = ref(null);
 
 async function init() {
   try {
@@ -143,10 +143,26 @@ const excelData = computed(() => {
   return data;
 });
 
-async function updateTableGuests(tableId, updatedGuests) {
+async function updateTableGuests(tableId, updatedGuests, isValid = true) {
   const table = results.value.find((t) => t.table.id === tableId);
-  if (table) {
+  console.log('isValid', isValid, tableId, results.value)
+  console.log('source2', source.value, table)
+  if(!isValid) {
+    // table.guests.pop()
+    console.log(table.guests)
+
+    source.value.guests.push(table.guests[0])
+    source.value.guests.pop()
+    let des = results.value.find((t) => source.value.table.id === t.table.id)
+    des.guests = source.value.guests
+    console.log('source3', results.value)
+  }
+  else if (table) {
+    source.value = JSON.parse(JSON.stringify(table))
+    console.log('source', source.value, table)
     table.guests = updatedGuests;
+    console.log('updatedGuests', updatedGuests)
+    console.log("res", results.value)
   } else {
     console.error("Table not found with ID:", tableId);
   }

@@ -76,23 +76,16 @@ function recheckTotalGuests() {
     const str = tableOverview[i].textContent;
     const matchTotal = str.match(/(\d+) \/ (\d+)/);
     const totalChairs = parseInt(matchTotal[2], 10);
-    let totalGuests = 0;
+    let total = 0;
     const guestItems = tableWithChairs[i].getElementsByClassName('guest-item');
     for (let j = 0; j < guestItems.length; j++) {
       const text = guestItems[j].textContent;
       const match = text.match(/(\d+)/);
       const guestCount = parseInt(match[1], 10);
-      totalGuests += guestCount;
+      total += guestCount;
     }
-    tableOverview[i].textContent = `Total Guests: ${totalGuests} / ${totalChairs}`;
+    tableOverview[i].textContent = `Total Guests: ${total} / ${totalChairs}`;
   }
-}
-
-function resetState() {
-  people.value = [...originalPeople.value];
-  totalGuests.value = originalTotalGuests.value;
-  actionInProgress.value = false;
-  recheckTotalGuests();
 }
 
 function onDragStart() {
@@ -102,41 +95,64 @@ function onDragStart() {
 }
 
 function onDragEnd() {
+  // console.log('onDragEnd: Dragging ended');
   actionInProgress.value = false;
   recheckTotalGuests();
+  // console.log("people.value", people.value, "props.people:", props.people, "original:",[...originalPeople.value])
+}
+
+async function resetState() {
+  await emit('update:people', people.value, false); // Emit to notify state change
+
+  console.log('reset', props.tableNumber, originalPeople.value)
+  // Reset to original state
+  people.value = JSON.parse(JSON.stringify(originalPeople.value));
+  totalGuests.value = originalTotalGuests.value;
+  // actionInProgress.value = false;
+  emit('update:people', people.value);
 }
 
 async function onGuestAdded(event) {
   await nextTick();
   const newTotalGuests = calculateTotalGuests(people.value);
+  console.log('add', props.tableNumber, newTotalGuests, people.value)
+  // console.log(`Table ${props.tableNumber}: New totalGuests after add:`, newTotalGuests);
+  // console.log(`Table ${props.tableNumber}: Current people state after add:`, JSON.stringify(people.value));
+
   if (newTotalGuests > props.chairs) {
-    showErrorModal.value = true;
-    event.from.insertBefore(event.item, event.from.children[event.oldIndex]);
+    // showErrorModal.value = true;
+    console.log(`Table ${props.tableNumber}: Resetting source table state.`);
+    // event.from.insertBefore(event.item, event.from.children[event.oldIndex]);
+    // console.log('event.from.children[event.oldIndex]', event.from.children[event.oldIndex])
     await nextTick(() => {
-      const parentElement = event.from.parentElement;
-      const guestItems = parentElement.getElementsByClassName('guest-item');
-      const str = event.from.parentElement.children[1].textContent;
-      const matchTotal = str.match(/(\d+) \/ (\d+)/);
-      const totalChairs = parseInt(matchTotal[2], 10);
-      let totalGuests = 0;
-      for (let i = 0; i < guestItems.length; i++) {
-        const text = guestItems[i].textContent;
-        const match = text.match(/(\d+)/);
-        const guestCount = parseInt(match[1], 10);
-        totalGuests += guestCount;
-      }
-      event.from.parentElement.children[1].textContent = `Total Guests: ${totalGuests} / ${totalChairs}`;
       resetState();
+      console.log('nextTi 1', people.value, newTotalGuests)
+      emit('update:people', people.value); // Emit to notify state change
     });
   } else {
     totalGuests.value = newTotalGuests;
     emit('update:people', people.value);
+    actionInProgress.value = false
+    console.log(`Table ${props.tableNumber}: Valid move, updated state.`);
+    console.log(`Table ${props.tableNumber}: Updated people state:`, JSON.stringify(people.value));
+    console.log(`Table ${props.tableNumber}: Updated totalGuests:`, totalGuests.value);
   }
 }
 
 function onGuestRemoved() {
-  totalGuests.value = calculateTotalGuests(people.value);
-  emit('update:people', people.value);
+  console.log('onGuestRemoved: A guest was removed', props.tableNumber);
+  const newTotalGuests = calculateTotalGuests(people.value);
+  if (newTotalGuests <= props.chairs) {
+    totalGuests.value = newTotalGuests;
+    console.log(people.value)
+    emit('update:people', people.value); // Notify parent of the valid change
+  }
+  // let sourcePeople = originalPeople.value
+  // if (newTotalGuests <= props.chairs) {
+  //   sourcePeople = people.value
+  // }
+  // people.value = sourcePeople
+  // totalGuests.value = calculateTotalGuests(people.value);
 }
 
 function getChairStyle(index) {
@@ -153,20 +169,25 @@ function getChairStyle(index) {
 }
 
 function getChairClass(index) {
-  return index < totalGuests.value ? 'chair active' : 'chair no-active';
+  const className = index < totalGuests.value ? 'chair active' : 'chair no-active';
+  return className;
 }
 
 watch(
     () => props.people,
-    (newPeople) => {
-      people.value = [...newPeople];
-      totalGuests.value = calculateTotalGuests(newPeople);
+    (newPeople, oldPeople) => {
+      if(JSON.stringify(newPeople) !== JSON.stringify(oldPeople)) {
+        people.value = [...newPeople];
+        totalGuests.value = calculateTotalGuests(newPeople);
+      }
     },
     { deep: true, immediate: true }
 );
+
 </script>
 
 <style scoped>
+
 .table-with-chairs {
   position: relative;
   width: 260px;
@@ -225,6 +246,7 @@ watch(
   justify-content: flex-start;
   align-items: center;
   overflow-y: auto;
+  max-height: 150px; /* Ensuring guests list scrolls */
 }
 
 .guest-item {
@@ -244,6 +266,7 @@ watch(
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-height: 40px; /* Ensuring uniform height */
 }
 
 .chair {
