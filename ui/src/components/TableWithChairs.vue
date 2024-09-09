@@ -120,7 +120,7 @@ async function onGuestAdded(event) {
   // console.log(`Table ${props.tableNumber}: Current people state after add:`, JSON.stringify(people.value));
 
   if (newTotalGuests > props.chairs) {
-    // showErrorModal.value = true;
+    showErrorModal.value = true;
     console.log(`Table ${props.tableNumber}: Resetting source table state.`);
     // event.from.insertBefore(event.item, event.from.children[event.oldIndex]);
     // console.log('event.from.children[event.oldIndex]', event.from.children[event.oldIndex])
