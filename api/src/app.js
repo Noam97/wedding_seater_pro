@@ -55,7 +55,7 @@ app.post('/api/register', async (req, res) => {
         });
 
         if (existingUser) {
-            return res.status(400).json({ error: 'Email already exists' }); // החזר שגיאה אם המייל כבר קיים
+            return res.status(400).json({ error: 'Email already exists' });
         }
 
         // Hash the password
@@ -174,6 +174,7 @@ app.put('/api/guests/:id', authenticateToken, async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
 app.put('/api/tables/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
@@ -240,6 +241,8 @@ app.get('/api/tables', authenticateToken, async (req, res) => {
     }
 })
 
+
+
 app.post('/api/tables/generate', authenticateToken, async (req, res) => {
     try {
         const guestsByUser = await prisma.guest.findMany({
@@ -255,7 +258,6 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
                 user_id: req.user.id
             },
         });
-
 
         // Group guests by side and closeness
         const groupedGuests = guestsByUser.reduce((acc, guest) => {
@@ -286,32 +288,31 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
         guestsByUser.forEach((guest) => {
             totalGuests += guest.count;
         });
+
+        // Check if there are enough seats for all guests
         if (totalGuests > totalPlacesCount) {
-            return res.status(422).send({error: "The guests number<br> is smaller than chairs number"});
+            return res.status(422).send({ error: "The guests number<br> is smaller than chairs number" });
         }
 
         if (totalGuests == 0 && totalPlacesCount == 0) {
-            return res.status(422).send({error: "You have not added tables and guests yet"});
+            return res.status(422).send({ error: "You have not added tables and guests yet" });
         }
 
         const seatingPlan = {};
+        const problematicGroups = []; // Collect groups that cannot be seated
 
         for (let table of tables) {
             seatingPlan[table.id] = {
                 table: table,
                 guests: [],
             };
-            console.log('table id: ', table.id);
-
             let remainingSeats = table.places_count;
-            console.log(remainingSeats, 'remainingSeats');
-            console.log(sortedGuests.length, 'sortedGuests.length');
+
             while (remainingSeats > 0 && sortedGuests.length > 0) {
                 let currentGroup = sortedGuests[0];
 
+                // If the entire group fits in the table
                 if (remainingSeats >= currentGroup.guestsCount) {
-                    console.log('if currentGroup.guestsCount', currentGroup.guestsCount );
-                    // Seat the entire group at this table
                     seatingPlan[table.id].guests.push(...currentGroup.guests);
 
                     await Promise.all(currentGroup.guests.map(guest =>
@@ -321,46 +322,65 @@ app.post('/api/tables/generate', authenticateToken, async (req, res) => {
                         })
                     ));
 
-                    // Remove this group as they are fully seated
                     remainingSeats -= currentGroup.guestsCount;
                     sortedGuests.shift();
                 } else {
+                    // Try to split the group
+                    let seatedGuests = [];
+                    let unseatedGuests = [];
 
-                    console.log('else remainingSeats', remainingSeats );
+                    for (let guest of currentGroup.guests) {
+                        if (guest.count <= remainingSeats) {
+                            seatedGuests.push(guest);
+                            remainingSeats -= guest.count;
+                        } else {
+                            unseatedGuests.push(guest);
+                        }
+                    }
 
-                    // Find the group that fits in the remaining seats
-                    const index = sortedGuests.findIndex(group => group.guestsCount <= remainingSeats);
-                    if (index !== -1) {
-                        // Remove the group from sortedGuests
-                        const groupThatFits = sortedGuests.splice(index, 1)[0];
+                    // If we were able to seat some of the group, update the group
+                    if (seatedGuests.length > 0) {
+                        seatingPlan[table.id].guests.push(...seatedGuests);
 
-                        // Seat the group that fits
-                        seatingPlan[table.id].guests.push(...groupThatFits.guests);
-
-                        await Promise.all(groupThatFits.guests.map(guest =>
+                        await Promise.all(seatedGuests.map(guest =>
                             prisma.guest.update({
                                 where: { id: guest.id },
                                 data: { table_id: table.id }
                             })
                         ));
 
-                        remainingSeats -= groupThatFits.guestsCount;
+                        // Update the group with remaining guests
+                        currentGroup.guests = unseatedGuests;
+                        currentGroup.guestsCount = unseatedGuests.reduce((acc, guest) => acc + guest.count, 0);
                     } else {
-                        // No group fits in the remaining seats
-                        break;
+                        // If none of the group could be seated, mark as problematic and move to next table
+                        problematicGroups.push(`${currentGroup.guests[0].name} with ${currentGroup.guestsCount} guests`);
+                        sortedGuests.shift();
                     }
 
+                    // Break the loop if the entire group couldn't be seated at this table
+                    if (currentGroup.guests.length === unseatedGuests.length) {
+                        break;
+                    }
                 }
             }
+        }
+
+        // If there are problematic groups, return an error with details
+        if (problematicGroups.length > 0) {
+            return res.status(422).send({
+                error: `Some groups are too large for the available tables.<br> Please split the following groups or add larger tables:<br><br> ${problematicGroups.join('<br>')}`
+            });
         }
 
         res.status(201).json(Object.values(seatingPlan));
     } catch (error) {
         console.error('Error generating tables:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({
+            error: 'Internal server error',
+        });
     }
 });
-
 
 app.delete('/api/guests/:id', authenticateToken, async (req, res) => {
     try {
