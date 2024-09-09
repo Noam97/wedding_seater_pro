@@ -76,6 +76,7 @@ export const useStore = defineStore('store', () => {
 
     function logout() {
         localStorage.removeItem('token')
+        localStorage.removeItem('seatingArrangement');
     }
 
     return {
